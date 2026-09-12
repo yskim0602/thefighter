@@ -4,6 +4,17 @@ extends Fighter
 ## hold L to block. Facing the opponent is handled by Fighter._face_opponent().
 
 
+func _ready() -> void:
+	stats = CharacterStats.new()
+	stats.fighter_name = "You"
+	stats.style = 0  # 복싱
+	stats.power = 12
+	stats.stamina = 12
+	stats.speed = 12
+	stats.skill = 10
+	super._ready()
+
+
 func _physics_process(delta: float) -> void:
 	if not is_ko and not is_staggered:
 		_handle_input()

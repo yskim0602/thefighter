@@ -15,6 +15,17 @@ var _decision_timer := 0.0
 var _block_timer := 0.0
 
 
+func _ready() -> void:
+	stats = CharacterStats.new()
+	stats.fighter_name = "지하 레슬러"
+	stats.style = 2  # 레슬링
+	stats.power = 14
+	stats.stamina = 14
+	stats.speed = 10
+	stats.skill = 12
+	super._ready()
+
+
 func _physics_process(delta: float) -> void:
 	if is_ko or is_staggered:
 		velocity.x = 0.0

@@ -9,20 +9,17 @@ signal health_changed(current: float, max_value: float)
 signal knocked_out
 
 const GRAVITY := 20.0
-const MOVE_SPEED := 4.0
 const ARENA_RADIUS := 7.0
 
 const STAGGER_TIME := 0.35
-const PUNCH_DAMAGE := 8.0
-const KICK_DAMAGE := 15.0
-const PUNCH_COOLDOWN := 0.5
-const KICK_COOLDOWN := 0.9
+const BASE_PUNCH_COOLDOWN := 0.5
+const BASE_KICK_COOLDOWN := 0.9
 const ATTACK_RANGE := 2.2
 const BLOCK_DAMAGE_MULT := 0.2
 
-@export var max_health := 100.0
+@export var stats: CharacterStats
 
-var health := max_health
+var health: float
 var opponent: Fighter = null
 var is_blocking := false
 var is_staggered := false
@@ -37,7 +34,9 @@ var _base_color := Color.WHITE
 
 
 func _ready() -> void:
-	health = max_health
+	if stats == null:
+		stats = CharacterStats.new()
+	health = stats.get_max_health()
 	var mat := mesh.get_surface_override_material(0)
 	if mat:
 		_base_color = mat.albedo_color
@@ -90,26 +89,27 @@ func _clamp_to_arena() -> void:
 func try_punch() -> void:
 	if is_ko or is_staggered or _punch_cooldown_left > 0.0:
 		return
-	_punch_cooldown_left = PUNCH_COOLDOWN
+	_punch_cooldown_left = BASE_PUNCH_COOLDOWN * stats.get_attack_cooldown_mult()
 	_play_attack_lunge()
 	await get_tree().create_timer(0.15).timeout
-	_resolve_attack(PUNCH_DAMAGE)
+	_resolve_attack(stats.get_punch_damage())
 
 
 func try_kick() -> void:
 	if is_ko or is_staggered or _kick_cooldown_left > 0.0:
 		return
-	_kick_cooldown_left = KICK_COOLDOWN
+	_kick_cooldown_left = BASE_KICK_COOLDOWN * stats.get_attack_cooldown_mult()
 	_play_attack_lunge()
 	await get_tree().create_timer(0.25).timeout
-	_resolve_attack(KICK_DAMAGE)
+	_resolve_attack(stats.get_kick_damage())
 
 
-func _resolve_attack(damage: float) -> void:
+func _resolve_attack(base_damage: float) -> void:
 	if is_ko or opponent == null or opponent.is_ko:
 		return
 	if global_position.distance_to(opponent.global_position) <= ATTACK_RANGE:
-		opponent.take_damage(damage)
+		var advantage := FightingStyle.get_advantage_multiplier(stats.style, opponent.stats.style)
+		opponent.take_damage(base_damage * advantage)
 
 
 func _play_attack_lunge() -> void:
@@ -125,7 +125,7 @@ func take_damage(amount: float) -> void:
 	if is_blocking:
 		final_damage *= BLOCK_DAMAGE_MULT
 	health = max(health - final_damage, 0.0)
-	health_changed.emit(health, max_health)
+	health_changed.emit(health, stats.get_max_health())
 	_flash_hit()
 	if not is_blocking:
 		is_staggered = true
@@ -151,11 +151,11 @@ func _ko() -> void:
 
 
 func reset_fighter(spawn_position: Vector3) -> void:
-	health = max_health
+	health = stats.get_max_health()
 	is_ko = false
 	is_staggered = false
 	is_blocking = false
 	rotation = Vector3.ZERO
 	global_position = spawn_position
 	mesh.position = Vector3.ZERO
-	health_changed.emit(health, max_health)
+	health_changed.emit(health, stats.get_max_health())

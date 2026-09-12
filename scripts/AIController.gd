@@ -46,8 +46,9 @@ func _make_decision() -> void:
 		var dir := opponent.global_position - global_position
 		dir.y = 0.0
 		dir = dir.normalized()
-		velocity.x = dir.x * MOVE_SPEED * AI_APPROACH_SPEED_MULT
-		velocity.z = dir.z * MOVE_SPEED * AI_APPROACH_SPEED_MULT
+		var move_speed := stats.get_move_speed()
+		velocity.x = dir.x * move_speed * AI_APPROACH_SPEED_MULT
+		velocity.z = dir.z * move_speed * AI_APPROACH_SPEED_MULT
 		return
 
 	velocity.x = 0.0

@@ -1,6 +1,14 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/AIController.gd" id="1"]
+
+[sub_resource type="CharacterStats" id="CharacterStats_e1"]
+fighter_name = "지하 레슬러"
+style = 2
+power = 14
+stamina = 14
+speed = 10
+skill = 12
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_e1"]
 radius = 0.4
@@ -15,6 +23,7 @@ albedo_color = Color(1, 0.25, 0.25, 1)
 
 [node name="Enemy" type="CharacterBody3D"]
 script = ExtResource("1")
+stats = SubResource("CharacterStats_e1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_e1")

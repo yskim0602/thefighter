@@ -76,6 +76,15 @@ offset_right = 200.0
 offset_bottom = 24.0
 text = "YOU"
 
+[node name="PlayerStyleLabel" type="Label" parent="UI/HUD"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 56.0
+offset_right = 200.0
+offset_bottom = 76.0
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+text = "복싱"
+
 [node name="EnemyHealthBar" type="ProgressBar" parent="UI/HUD"]
 layout_mode = 0
 anchor_left = 1.0
@@ -97,6 +106,18 @@ offset_right = -24.0
 offset_bottom = 24.0
 horizontal_alignment = 2
 text = "CPU"
+
+[node name="EnemyStyleLabel" type="Label" parent="UI/HUD"]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 56.0
+offset_right = -24.0
+offset_bottom = 76.0
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+horizontal_alignment = 2
+text = "레슬링"
 
 [node name="RoundTimer" type="Label" parent="UI/HUD"]
 layout_mode = 0

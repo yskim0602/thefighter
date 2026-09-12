@@ -9,6 +9,8 @@ const ROUND_TIME := 99.0
 @onready var enemy_bar: ProgressBar = $UI/HUD/EnemyHealthBar
 @onready var result_label: Label = $UI/HUD/ResultLabel
 @onready var round_timer_label: Label = $UI/HUD/RoundTimer
+@onready var player_style_label: Label = $UI/HUD/PlayerStyleLabel
+@onready var enemy_style_label: Label = $UI/HUD/EnemyStyleLabel
 
 var player_spawn: Vector3
 var enemy_spawn: Vector3
@@ -28,8 +30,10 @@ func _ready() -> void:
 	enemy.knocked_out.connect(func(): _end_round("YOU LOSE..."))
 
 	result_label.visible = false
-	_on_player_health_changed(player.health, player.max_health)
-	_on_enemy_health_changed(enemy.health, enemy.max_health)
+	_on_player_health_changed(player.health, player.stats.get_max_health())
+	_on_enemy_health_changed(enemy.health, enemy.stats.get_max_health())
+	player_style_label.text = FightingStyle.style_name(player.stats.style)
+	enemy_style_label.text = FightingStyle.style_name(enemy.stats.style)
 
 
 func _process(delta: float) -> void:

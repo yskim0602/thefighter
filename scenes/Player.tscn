@@ -1,6 +1,14 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/PlayerController.gd" id="1"]
+
+[sub_resource type="CharacterStats" id="CharacterStats_p1"]
+fighter_name = "You"
+style = 0
+power = 12
+stamina = 12
+speed = 12
+skill = 10
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_p1"]
 radius = 0.4
@@ -15,6 +23,7 @@ albedo_color = Color(0.2, 0.45, 1, 1)
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1")
+stats = SubResource("CharacterStats_p1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_p1")

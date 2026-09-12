@@ -24,8 +24,9 @@ func _handle_input() -> void:
 		Input.get_axis("move_left", "move_right"),
 		Input.get_axis("move_forward", "move_back")
 	)
-	velocity.x = input_dir.x * MOVE_SPEED
-	velocity.z = input_dir.y * MOVE_SPEED
+	var move_speed := stats.get_move_speed()
+	velocity.x = input_dir.x * move_speed
+	velocity.z = input_dir.y * move_speed
 
 	if Input.is_action_just_pressed("attack_punch"):
 		try_punch()

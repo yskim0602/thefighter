@@ -52,7 +52,7 @@ func _process(delta: float) -> void:
 func _update_camera() -> void:
 	var mid := (player.global_position + enemy.global_position) * 0.5
 	var dist := player.global_position.distance_to(enemy.global_position)
-	var back_distance := clamp(dist * 1.2 + 3.0, 6.0, 12.0)
+	var back_distance: float = clamp(dist * 1.2 + 3.0, 6.0, 12.0)
 	camera.global_position = mid + Vector3(0, 3.0, back_distance)
 	camera.look_at(mid + Vector3(0, 1, 0), Vector3.UP)
 

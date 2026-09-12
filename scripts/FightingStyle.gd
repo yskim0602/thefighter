@@ -17,7 +17,7 @@ const ADVANTAGE_MULT := 1.25
 const DISADVANTAGE_MULT := 0.85
 
 
-static func get_advantage_multiplier(attacker: Style, defender: Style) -> float:
+static func get_advantage_multiplier(attacker: int, defender: int) -> float:
 	if attacker in TAKEDOWN_GRAPPLERS and defender in STRIKERS:
 		return ADVANTAGE_MULT
 	if attacker in GROUND_GRAPPLERS and defender in TAKEDOWN_GRAPPLERS:
@@ -35,7 +35,7 @@ static func get_advantage_multiplier(attacker: Style, defender: Style) -> float:
 	return 1.0
 
 
-static func style_name(style: Style) -> String:
+static func style_name(style: int) -> String:
 	match style:
 		Style.BOXING:
 			return "복싱"

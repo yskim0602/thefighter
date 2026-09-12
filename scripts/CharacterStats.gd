@@ -6,7 +6,11 @@ extends Resource
 ## Fighter.gd가 그대로 가져다 쓴다.
 
 @export var fighter_name: String = "Fighter"
-@export var style: FightingStyle.Style = FightingStyle.Style.BOXING
+
+## FightingStyle.Style과 순서를 맞춘 정수값 (0=복싱, 1=무에타이, 2=레슬링, 3=유도, 4=주짓수).
+## 다른 스크립트의 enum을 export 기본값으로 직접 참조하면 Godot이 전역 클래스를
+## 스캔하는 시점에 등록이 깨지는 경우가 있어, 여기서는 int + export_enum으로만 다룬다.
+@export_enum("복싱", "무에타이", "레슬링", "유도", "주짓수") var style: int = 0
 
 @export_range(1, 100) var power: int = 10
 @export_range(1, 100) var stamina: int = 10

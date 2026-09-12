@@ -16,13 +16,15 @@ var _block_timer := 0.0
 
 
 func _ready() -> void:
+	# 플레이어가 승수를 쌓을수록 상대도 조금씩 강해진다 (훈련할 이유를 유지).
+	var win_bonus := int(SaveManager.career.wins / 3)
 	stats = CharacterStats.new()
 	stats.fighter_name = "지하 레슬러"
 	stats.style = 2  # 레슬링
-	stats.power = 14
-	stats.stamina = 14
-	stats.speed = 10
-	stats.skill = 12
+	stats.power = 14 + win_bonus
+	stats.stamina = 14 + win_bonus
+	stats.speed = 10 + win_bonus
+	stats.skill = 12 + win_bonus
 	super._ready()
 
 

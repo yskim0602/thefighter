@@ -1,0 +1,124 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/Career.gd" id="1"]
+
+[node name="Career" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.07, 0.07, 0.09, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(420, 0)
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+text = "THE FIGHTER"
+
+[node name="TierLabel" type="Label" parent="CenterContainer/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "등급: 지하 파이트"
+
+[node name="RecordLabel" type="Label" parent="CenterContainer/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "전적 0승 0패"
+
+[node name="MoneyLabel" type="Label" parent="CenterContainer/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "파이트머니: 0 G"
+
+[node name="HSeparator1" type="HSeparator" parent="CenterContainer/VBox"]
+layout_mode = 2
+
+[node name="PowerRow" type="HBoxContainer" parent="CenterContainer/VBox"]
+layout_mode = 2
+
+[node name="PowerLabel" type="Label" parent="CenterContainer/VBox/PowerRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
+text = "파워 10"
+
+[node name="TrainButton" type="Button" parent="CenterContainer/VBox/PowerRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "훈련 (50 G)"
+
+[node name="StaminaRow" type="HBoxContainer" parent="CenterContainer/VBox"]
+layout_mode = 2
+
+[node name="StaminaLabel" type="Label" parent="CenterContainer/VBox/StaminaRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
+text = "체력 10"
+
+[node name="TrainButton" type="Button" parent="CenterContainer/VBox/StaminaRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "훈련 (50 G)"
+
+[node name="SpeedRow" type="HBoxContainer" parent="CenterContainer/VBox"]
+layout_mode = 2
+
+[node name="SpeedLabel" type="Label" parent="CenterContainer/VBox/SpeedRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
+text = "스피드 10"
+
+[node name="TrainButton" type="Button" parent="CenterContainer/VBox/SpeedRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "훈련 (50 G)"
+
+[node name="SkillRow" type="HBoxContainer" parent="CenterContainer/VBox"]
+layout_mode = 2
+
+[node name="SkillLabel" type="Label" parent="CenterContainer/VBox/SkillRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
+text = "스킬 10"
+
+[node name="TrainButton" type="Button" parent="CenterContainer/VBox/SkillRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "훈련 (50 G)"
+
+[node name="HSeparator2" type="HSeparator" parent="CenterContainer/VBox"]
+layout_mode = 2
+
+[node name="FightButton" type="Button" parent="CenterContainer/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 52)
+theme_override_font_sizes/font_size = 22
+text = "경기 시작"
+
+[connection signal="pressed" from="CenterContainer/VBox/PowerRow/TrainButton" to="." method="_on_train_pressed" binds=["power"]]
+[connection signal="pressed" from="CenterContainer/VBox/StaminaRow/TrainButton" to="." method="_on_train_pressed" binds=["stamina"]]
+[connection signal="pressed" from="CenterContainer/VBox/SpeedRow/TrainButton" to="." method="_on_train_pressed" binds=["speed"]]
+[connection signal="pressed" from="CenterContainer/VBox/SkillRow/TrainButton" to="." method="_on_train_pressed" binds=["skill"]]
+[connection signal="pressed" from="CenterContainer/VBox/FightButton" to="." method="_on_fight_pressed"]

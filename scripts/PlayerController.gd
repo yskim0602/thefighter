@@ -5,13 +5,7 @@ extends Fighter
 
 
 func _ready() -> void:
-	stats = CharacterStats.new()
-	stats.fighter_name = "You"
-	stats.style = 0  # 복싱
-	stats.power = 12
-	stats.stamina = 12
-	stats.speed = 12
-	stats.skill = 10
+	stats = SaveManager.career.stats
 	super._ready()
 
 

@@ -1,6 +1,32 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/Career.gd" id="1"]
+
+[sub_resource type="Environment" id="Environment_preview"]
+background_mode = 1
+background_color = Color(0.04, 0.035, 0.03, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.5, 0.45, 1)
+ambient_light_energy = 0.35
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(5, 0.2, 5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
+albedo_color = Color(0.12, 0.1, 0.09, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall"]
+size = Vector3(5, 3, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_preview"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_preview"]
+albedo_color = Color(0.2, 0.45, 1, 1)
 
 [node name="Career" type="Control"]
 anchors_preset = 15
@@ -17,108 +43,154 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.07, 0.07, 0.09, 1)
+color = Color(0.05, 0.05, 0.06, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="PreviewContainer" type="SubViewportContainer" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_left = 0.08
+anchor_top = 0.04
+anchor_right = 0.92
+anchor_bottom = 0.58
 grow_horizontal = 2
 grow_vertical = 2
+stretch = true
 
-[node name="VBox" type="VBoxContainer" parent="CenterContainer"]
-layout_mode = 2
-custom_minimum_size = Vector2(420, 0)
-theme_override_constants/separation = 14
+[node name="PreviewViewport" type="SubViewport" parent="PreviewContainer"]
+size = Vector2i(800, 450)
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 36
-horizontal_alignment = 1
-text = "THE FIGHTER"
+[node name="PreviewScene" type="Node3D" parent="PreviewContainer/PreviewViewport"]
 
-[node name="TierLabel" type="Label" parent="CenterContainer/VBox"]
-layout_mode = 2
-horizontal_alignment = 1
+[node name="WorldEnvironment" type="WorldEnvironment" parent="PreviewContainer/PreviewViewport/PreviewScene"]
+environment = SubResource("Environment_preview")
+
+[node name="FillLight" type="DirectionalLight3D" parent="PreviewContainer/PreviewViewport/PreviewScene"]
+transform = Transform3D(1, 0, 0, 0, 0.766, 0.643, 0, -0.643, 0.766, 0, 3, 2)
+light_color = Color(0.6, 0.7, 0.9, 1)
+light_energy = 0.5
+
+[node name="BulbLight" type="OmniLight3D" parent="PreviewContainer/PreviewViewport/PreviewScene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 1.2)
+light_color = Color(1, 0.85, 0.6, 1)
+light_energy = 2.5
+omni_range = 8.0
+
+[node name="Camera3D" type="Camera3D" parent="PreviewContainer/PreviewViewport/PreviewScene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 3.2)
+current = true
+
+[node name="Floor" type="MeshInstance3D" parent="PreviewContainer/PreviewViewport/PreviewScene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+mesh = SubResource("BoxMesh_floor")
+surface_material_override/0 = SubResource("StandardMaterial3D_floor")
+
+[node name="BackWall" type="MeshInstance3D" parent="PreviewContainer/PreviewViewport/PreviewScene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -1.8)
+mesh = SubResource("BoxMesh_wall")
+surface_material_override/0 = SubResource("StandardMaterial3D_wall")
+
+[node name="CharacterPreview" type="MeshInstance3D" parent="PreviewContainer/PreviewViewport/PreviewScene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_preview")
+surface_material_override/0 = SubResource("StandardMaterial3D_preview")
+
+[node name="TierLabel" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.05
+anchor_right = 0.6
+anchor_top = 0.015
+anchor_bottom = 0.05
 text = "등급: 지하 파이트"
 
-[node name="RecordLabel" type="Label" parent="CenterContainer/VBox"]
-layout_mode = 2
+[node name="MoneyLabel" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.6
+anchor_right = 0.95
+anchor_top = 0.015
+anchor_bottom = 0.06
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+text = "0 G"
+
+[node name="RecordLabel" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.0
+anchor_right = 1.0
+anchor_top = 0.585
+anchor_bottom = 0.63
 horizontal_alignment = 1
 text = "전적 0승 0패"
 
-[node name="MoneyLabel" type="Label" parent="CenterContainer/VBox"]
-layout_mode = 2
-horizontal_alignment = 1
-text = "파이트머니: 0 G"
+[node name="BottomPanel" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.08
+anchor_right = 0.92
+anchor_top = 0.65
+anchor_bottom = 0.99
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
 
-[node name="HSeparator1" type="HSeparator" parent="CenterContainer/VBox"]
+[node name="PowerRow" type="HBoxContainer" parent="BottomPanel"]
 layout_mode = 2
 
-[node name="PowerRow" type="HBoxContainer" parent="CenterContainer/VBox"]
+[node name="PowerLabel" type="Label" parent="BottomPanel/PowerRow"]
 layout_mode = 2
-
-[node name="PowerLabel" type="Label" parent="CenterContainer/VBox/PowerRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(220, 0)
+custom_minimum_size = Vector2(180, 0)
 text = "파워 10"
 
-[node name="TrainButton" type="Button" parent="CenterContainer/VBox/PowerRow"]
+[node name="TrainButton" type="Button" parent="BottomPanel/PowerRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "훈련 (50 G)"
 
-[node name="StaminaRow" type="HBoxContainer" parent="CenterContainer/VBox"]
+[node name="StaminaRow" type="HBoxContainer" parent="BottomPanel"]
 layout_mode = 2
 
-[node name="StaminaLabel" type="Label" parent="CenterContainer/VBox/StaminaRow"]
+[node name="StaminaLabel" type="Label" parent="BottomPanel/StaminaRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(220, 0)
+custom_minimum_size = Vector2(180, 0)
 text = "체력 10"
 
-[node name="TrainButton" type="Button" parent="CenterContainer/VBox/StaminaRow"]
+[node name="TrainButton" type="Button" parent="BottomPanel/StaminaRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "훈련 (50 G)"
 
-[node name="SpeedRow" type="HBoxContainer" parent="CenterContainer/VBox"]
+[node name="SpeedRow" type="HBoxContainer" parent="BottomPanel"]
 layout_mode = 2
 
-[node name="SpeedLabel" type="Label" parent="CenterContainer/VBox/SpeedRow"]
+[node name="SpeedLabel" type="Label" parent="BottomPanel/SpeedRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(220, 0)
+custom_minimum_size = Vector2(180, 0)
 text = "스피드 10"
 
-[node name="TrainButton" type="Button" parent="CenterContainer/VBox/SpeedRow"]
+[node name="TrainButton" type="Button" parent="BottomPanel/SpeedRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "훈련 (50 G)"
 
-[node name="SkillRow" type="HBoxContainer" parent="CenterContainer/VBox"]
+[node name="SkillRow" type="HBoxContainer" parent="BottomPanel"]
 layout_mode = 2
 
-[node name="SkillLabel" type="Label" parent="CenterContainer/VBox/SkillRow"]
+[node name="SkillLabel" type="Label" parent="BottomPanel/SkillRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(220, 0)
+custom_minimum_size = Vector2(180, 0)
 text = "스킬 10"
 
-[node name="TrainButton" type="Button" parent="CenterContainer/VBox/SkillRow"]
+[node name="TrainButton" type="Button" parent="BottomPanel/SkillRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "훈련 (50 G)"
 
-[node name="HSeparator2" type="HSeparator" parent="CenterContainer/VBox"]
-layout_mode = 2
-
-[node name="FightButton" type="Button" parent="CenterContainer/VBox"]
+[node name="FightButton" type="Button" parent="BottomPanel"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 52)
 theme_override_font_sizes/font_size = 22
 text = "경기 시작"
 
-[connection signal="pressed" from="CenterContainer/VBox/PowerRow/TrainButton" to="." method="_on_train_pressed" binds=["power"]]
-[connection signal="pressed" from="CenterContainer/VBox/StaminaRow/TrainButton" to="." method="_on_train_pressed" binds=["stamina"]]
-[connection signal="pressed" from="CenterContainer/VBox/SpeedRow/TrainButton" to="." method="_on_train_pressed" binds=["speed"]]
-[connection signal="pressed" from="CenterContainer/VBox/SkillRow/TrainButton" to="." method="_on_train_pressed" binds=["skill"]]
-[connection signal="pressed" from="CenterContainer/VBox/FightButton" to="." method="_on_fight_pressed"]
+[connection signal="pressed" from="BottomPanel/PowerRow/TrainButton" to="." method="_on_train_pressed" binds=["power"]]
+[connection signal="pressed" from="BottomPanel/StaminaRow/TrainButton" to="." method="_on_train_pressed" binds=["stamina"]]
+[connection signal="pressed" from="BottomPanel/SpeedRow/TrainButton" to="." method="_on_train_pressed" binds=["speed"]]
+[connection signal="pressed" from="BottomPanel/SkillRow/TrainButton" to="." method="_on_train_pressed" binds=["skill"]]
+[connection signal="pressed" from="BottomPanel/FightButton" to="." method="_on_fight_pressed"]

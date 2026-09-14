@@ -82,16 +82,34 @@
 - 모든 진행 상황은 `user://career_save.json`에 자동 저장되고, 게임을 다시
   켜면 `SaveManager`(오토로드 싱글턴)가 불러옵니다.
 
+## 화면/UI 공통 규칙
+
+- **테마**: `theme/GameTheme.tres`를 프로젝트 전역 테마로 등록해뒀습니다
+  (`project.godot`의 `gui/theme/custom`). 버튼(둥근 모서리, hover/pressed
+  색), 패널(`PanelContainer`, 어두운 카드 배경 + 얇은 테두리), 체력바까지
+  이 파일 하나로 전부 관리됩니다. 새 버튼/패널을 만들 때 씬마다 따로
+  스타일을 입힐 필요 없이 기본 노드를 그대로 쓰면 이 테마가 자동 적용됩니다.
+  더 다듬고 싶으면 이 파일의 `StyleBoxFlat` 색상/둥근 정도만 바꾸면 전체
+  화면에 한 번에 반영됩니다.
+- **탭이 있는 메뉴 구조**: 캐릭터 메뉴처럼 하위 항목이 여러 개인 화면은,
+  화면 전체를 다른 씬으로 바꾸는 대신 **왼쪽 사이드바 + 오른쪽 콘텐츠 패널**
+  구조로 만듭니다 (`CharacterMenu.tscn`의 `Body`(HBoxContainer) →
+  `Sidebar`/`ContentPanel` 참고). 사이드바 버튼을 누르면 오른쪽 콘텐츠만
+  바뀌는 게 목표라, 지금처럼 탭이 하나뿐이어도 이 뼈대를 미리 만들어두고
+  나머지 탭은 비활성 버튼("준비중")으로 자리만 잡아둡니다.
+
 ## 프로젝트 구조
 
 ```
 thefighter/
-├── project.godot           # 프로젝트 설정 + 입력 맵 + SaveManager/Nav 오토로드
+├── project.godot           # 프로젝트 설정 + 입력 맵 + 테마 + SaveManager/Nav 오토로드
+├── theme/
+│   └── GameTheme.tres       # 전역 UI 테마 (버튼/패널/체력바 스타일)
 ├── images/
 │   └── hanger_icon.svg      # "캐릭터" 메뉴 버튼 아이콘
 ├── scenes/
 │   ├── Career.tscn          # 홈 화면: 3D 캐릭터 미리보기, 파이트머니/전적/등급, 메뉴
-│   ├── CharacterMenu.tscn    # 캐릭터 메뉴: 능력치 훈련 (+ 추후 외형 커스터마이징)
+│   ├── CharacterMenu.tscn    # 캐릭터 메뉴: 왼쪽 탭(능력치/외형/악세사리) + 오른쪽 콘텐츠
 │   ├── MenuHeader.tscn       # 모든 서브 메뉴 공용 헤더: "뒤로"/"홈" 버튼
 │   ├── Main.tscn             # 아레나, 조명, 카메라, UI, 두 파이터 배치 (전투)
 │   ├── Player.tscn           # 플레이어 파이터(파란 캡슐, 복싱)
@@ -105,7 +123,7 @@ thefighter/
     ├── Nav.gd              # 오토로드 싱글턴: 화면 이동 기록(스택) 관리, go_to/go_back/go_home
     ├── MenuHeader.gd        # 공용 뒤로가기/홈 버튼 로직 (Nav 호출)
     ├── Career.gd            # 홈 화면: 정보 표시, 서브 메뉴/경기 진입
-    ├── CharacterMenu.gd     # 캐릭터 메뉴: 능력치 훈련
+    ├── CharacterMenu.gd     # 캐릭터 메뉴: 사이드바 능력치 탭 콘텐츠
     ├── PlayerController.gd # 키 입력 처리 + SaveManager의 능력치를 그대로 사용
     ├── AIController.gd     # 접근 → 공격/블록을 선택하는 단순 AI (승수에 따라 소폭 강해짐)
     └── Main.gd             # 카메라 추적, HUD, 라운드 진행, 결과 → 커리어 반영/저장

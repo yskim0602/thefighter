@@ -61,6 +61,10 @@ return_to_menu={
 ]
 }
 
+[gui]
+
+theme/custom="res://theme/GameTheme.tres"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

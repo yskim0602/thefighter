@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/MenuHeader.gd" id="1"]
+
+[node name="MenuHeader" type="HBoxContainer"]
+script = ExtResource("1")
+theme_override_constants/separation = 8
+
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 2
+text = "< 뒤로"
+
+[node name="HomeButton" type="Button" parent="."]
+layout_mode = 2
+text = "홈"
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="HomeButton" to="." method="_on_home_pressed"]

@@ -48,7 +48,7 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("restart"):
 		_restart()
 	if Input.is_action_just_pressed("return_to_menu"):
-		get_tree().change_scene_to_file("res://scenes/Career.tscn")
+		Nav.go_home()
 
 
 func _update_camera() -> void:

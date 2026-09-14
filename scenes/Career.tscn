@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/Career.gd" id="1"]
+[ext_resource type="Texture2D" path="res://images/hanger_icon.svg" id="2"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1
@@ -125,63 +126,21 @@ text = "전적 0승 0패"
 layout_mode = 1
 anchor_left = 0.08
 anchor_right = 0.92
-anchor_top = 0.65
+anchor_top = 0.66
 anchor_bottom = 0.99
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 12
 
-[node name="PowerRow" type="HBoxContainer" parent="BottomPanel"]
+[node name="MenuRow" type="HBoxContainer" parent="BottomPanel"]
 layout_mode = 2
+alignment = 1
 
-[node name="PowerLabel" type="Label" parent="BottomPanel/PowerRow"]
+[node name="CharacterButton" type="Button" parent="BottomPanel/MenuRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(180, 0)
-text = "파워 10"
-
-[node name="TrainButton" type="Button" parent="BottomPanel/PowerRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "훈련 (50 G)"
-
-[node name="StaminaRow" type="HBoxContainer" parent="BottomPanel"]
-layout_mode = 2
-
-[node name="StaminaLabel" type="Label" parent="BottomPanel/StaminaRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(180, 0)
-text = "체력 10"
-
-[node name="TrainButton" type="Button" parent="BottomPanel/StaminaRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "훈련 (50 G)"
-
-[node name="SpeedRow" type="HBoxContainer" parent="BottomPanel"]
-layout_mode = 2
-
-[node name="SpeedLabel" type="Label" parent="BottomPanel/SpeedRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(180, 0)
-text = "스피드 10"
-
-[node name="TrainButton" type="Button" parent="BottomPanel/SpeedRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "훈련 (50 G)"
-
-[node name="SkillRow" type="HBoxContainer" parent="BottomPanel"]
-layout_mode = 2
-
-[node name="SkillLabel" type="Label" parent="BottomPanel/SkillRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(180, 0)
-text = "스킬 10"
-
-[node name="TrainButton" type="Button" parent="BottomPanel/SkillRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "훈련 (50 G)"
+custom_minimum_size = Vector2(140, 56)
+icon = ExtResource("2")
+text = "캐릭터"
 
 [node name="FightButton" type="Button" parent="BottomPanel"]
 layout_mode = 2
@@ -189,8 +148,5 @@ custom_minimum_size = Vector2(0, 52)
 theme_override_font_sizes/font_size = 22
 text = "경기 시작"
 
-[connection signal="pressed" from="BottomPanel/PowerRow/TrainButton" to="." method="_on_train_pressed" binds=["power"]]
-[connection signal="pressed" from="BottomPanel/StaminaRow/TrainButton" to="." method="_on_train_pressed" binds=["stamina"]]
-[connection signal="pressed" from="BottomPanel/SpeedRow/TrainButton" to="." method="_on_train_pressed" binds=["speed"]]
-[connection signal="pressed" from="BottomPanel/SkillRow/TrainButton" to="." method="_on_train_pressed" binds=["skill"]]
+[connection signal="pressed" from="BottomPanel/MenuRow/CharacterButton" to="." method="_on_character_pressed"]
 [connection signal="pressed" from="BottomPanel/FightButton" to="." method="_on_fight_pressed"]

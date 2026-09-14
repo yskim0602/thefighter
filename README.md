@@ -119,6 +119,13 @@ thefighter/
 JSON으로 직접 저장합니다 — 커스텀 리소스 타입을 씬 파일에 직접 박아넣었을 때
 겪었던 클래스 인식 문제를 피하기 위한 선택입니다.
 
+**주의**: `Control` 씬에서 화면 전체를 덮는 `CenterContainer`/`Background` 같은
+노드가 `MenuHeader`보다 트리 순서상 나중(=화면상 위)에 있으면, 그 투명한
+영역이 클릭을 가로채서 `MenuHeader`의 뒤로가기/홈 버튼이 안 눌리는 문제가
+생긴다 (`CharacterMenu.tscn`에서 실제로 겪은 버그). 그래서 화면 전체를 덮는
+레이아웃용 컨테이너는 `mouse_filter = 2`(Ignore)로 두고, `MenuHeader`는
+루트의 마지막 자식으로 둔다 — 새 메뉴를 만들 때도 이 두 가지를 지킬 것.
+
 **새 메뉴를 추가할 때의 규칙**: 홈(`Career.tscn`)을 제외한 모든 메뉴 화면은
 `MenuHeader.tscn`을 인스턴스로 넣어서 "뒤로"/"홈" 버튼을 항상 보여줘야 하고,
 화면 전환은 `get_tree().change_scene_to_file()`을 직접 부르지 말고 반드시

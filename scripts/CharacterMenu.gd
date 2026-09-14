@@ -8,19 +8,19 @@ const TRAIN_COST_PER_POINT := 10
 const TRAIN_GAIN := 1
 const TRAINABLE_STATS := ["power", "stamina", "speed", "skill"]
 
-@onready var money_label: Label = $VBox/MoneyLabel
+@onready var money_label: Label = $CenterContainer/VBox/MoneyLabel
 
 @onready var stat_labels := {
-	"power": $VBox/StatPanel/PowerRow/PowerLabel,
-	"stamina": $VBox/StatPanel/StaminaRow/StaminaLabel,
-	"speed": $VBox/StatPanel/SpeedRow/SpeedLabel,
-	"skill": $VBox/StatPanel/SkillRow/SkillLabel,
+	"power": $CenterContainer/VBox/StatPanel/PowerRow/PowerLabel,
+	"stamina": $CenterContainer/VBox/StatPanel/StaminaRow/StaminaLabel,
+	"speed": $CenterContainer/VBox/StatPanel/SpeedRow/SpeedLabel,
+	"skill": $CenterContainer/VBox/StatPanel/SkillRow/SkillLabel,
 }
 @onready var train_buttons := {
-	"power": $VBox/StatPanel/PowerRow/TrainButton,
-	"stamina": $VBox/StatPanel/StaminaRow/TrainButton,
-	"speed": $VBox/StatPanel/SpeedRow/TrainButton,
-	"skill": $VBox/StatPanel/SkillRow/TrainButton,
+	"power": $CenterContainer/VBox/StatPanel/PowerRow/TrainButton,
+	"stamina": $CenterContainer/VBox/StatPanel/StaminaRow/TrainButton,
+	"speed": $CenterContainer/VBox/StatPanel/SpeedRow/TrainButton,
+	"skill": $CenterContainer/VBox/StatPanel/SkillRow/TrainButton,
 }
 
 

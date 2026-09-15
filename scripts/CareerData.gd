@@ -6,8 +6,8 @@ extends RefCounted
 ## 한다 (씬 파일이 커스텀 리소스 타입을 직접 참조할 때 생기는 로딩 타이밍
 ## 문제를 피하기 위함 - scripts/CharacterStats.gd 관련 이슈 참고).
 
-## 지하 체육관부터 챔피언 타이틀전까지, 10단계 무대. StageSelect.gd가 이
-## 순서 그대로 카드를 나열한다.
+## 지하 체육관부터 챔피언 타이틀전까지, 10단계 무대. Career.gd(홈 화면)가 이
+## 순서 그대로 무대 바를 넘겨가며 보여준다.
 enum Stage {
 	UNDERGROUND,
 	AMATEUR_CIRCUIT,

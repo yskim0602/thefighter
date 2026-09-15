@@ -52,15 +52,18 @@ theme_override_constants/separation = 8
 
 [node name="StatsTabButton" type="Button" parent="Body/Sidebar/SidebarVBox"]
 layout_mode = 2
+size_flags_horizontal = 0
 text = "능력치"
 
 [node name="AppearanceTabButton" type="Button" parent="Body/Sidebar/SidebarVBox"]
 layout_mode = 2
+size_flags_horizontal = 0
 disabled = true
 text = "외형 (준비중)"
 
 [node name="AccessoryTabButton" type="Button" parent="Body/Sidebar/SidebarVBox"]
 layout_mode = 2
+size_flags_horizontal = 0
 disabled = true
 text = "악세사리 (준비중)"
 

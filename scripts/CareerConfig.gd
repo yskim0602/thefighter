@@ -2,8 +2,8 @@ class_name CareerConfig
 extends RefCounted
 
 ## 커리어/매치메이킹 관련 모든 튜닝 수치를 한곳에 모아둔다. 스테이지 수,
-## 스테이지당 필요 경기/승수, 랭크 임계값, 보상 공식, 거절 페널티, 상대
-## AI 스타일 목록 전부 여기서 관리한다 - 밸런스를 바꿀 땐 이 파일만 건드리면 된다.
+## 스테이지당 필요 경기/승수, 랭크 임계값, 보상 공식, 상대 AI 스타일 목록
+## 전부 여기서 관리한다 - 밸런스를 바꿀 땐 이 파일만 건드리면 된다.
 
 ## --- 스테이지 0~5 (UNDERGROUND ~ WORLD SERIES): 승수 기반 승급 ---
 const STAGE_FIGHTS_REQUIRED := 10
@@ -23,34 +23,28 @@ const RANK_LOSS_ON_DEFEAT := 1
 
 const TITLE_DEFENSES_FOR_LEGEND := 5
 
-## --- 경기 거절 페널티 ---
-const DECLINE_FAME_PENALTY_IMPORTANT := 2
-const DECLINE_FAN_PENALTY_IMPORTANT := 5
-
 ## --- 상대 AI 스타일(archetype). 초반엔 일부만, 스테이지가 오를수록 다양해진다 ---
-enum Archetype { BOXER, KICKBOXER, BRAWLER, COUNTER, GRAPPLER, DEFENSIVE }
+enum Archetype { BOXER, BRAWLER, COUNTER, DEFENSIVE }
 
 const ARCHETYPE_NAMES := {
 	Archetype.BOXER: "복서",
-	Archetype.KICKBOXER: "킥복서",
 	Archetype.BRAWLER: "난전형",
 	Archetype.COUNTER: "카운터형",
-	Archetype.GRAPPLER: "그래플러",
 	Archetype.DEFENSIVE: "방어형",
 }
 
 ## 인덱스 = CareerData.Stage 값. 스테이지가 오를수록 풀이 넓어지고 어려워진다.
 const ARCHETYPE_POOL_BY_STAGE := [
 	[Archetype.BOXER, Archetype.BRAWLER],
-	[Archetype.BOXER, Archetype.BRAWLER, Archetype.KICKBOXER],
-	[Archetype.BOXER, Archetype.KICKBOXER, Archetype.BRAWLER, Archetype.GRAPPLER],
-	[Archetype.BOXER, Archetype.KICKBOXER, Archetype.BRAWLER, Archetype.GRAPPLER, Archetype.DEFENSIVE],
-	[Archetype.KICKBOXER, Archetype.GRAPPLER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.BOXER, Archetype.KICKBOXER, Archetype.BRAWLER, Archetype.GRAPPLER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.KICKBOXER, Archetype.GRAPPLER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.KICKBOXER, Archetype.GRAPPLER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.COUNTER, Archetype.GRAPPLER, Archetype.DEFENSIVE],
-	[Archetype.COUNTER, Archetype.GRAPPLER, Archetype.DEFENSIVE],
+	[Archetype.BOXER, Archetype.BRAWLER],
+	[Archetype.BOXER, Archetype.BRAWLER, Archetype.DEFENSIVE],
+	[Archetype.BOXER, Archetype.BRAWLER, Archetype.DEFENSIVE, Archetype.COUNTER],
+	[Archetype.BOXER, Archetype.BRAWLER, Archetype.DEFENSIVE, Archetype.COUNTER],
+	[Archetype.BOXER, Archetype.BRAWLER, Archetype.DEFENSIVE, Archetype.COUNTER],
+	[Archetype.BOXER, Archetype.DEFENSIVE, Archetype.COUNTER],
+	[Archetype.BOXER, Archetype.DEFENSIVE, Archetype.COUNTER],
+	[Archetype.COUNTER, Archetype.DEFENSIVE],
+	[Archetype.COUNTER, Archetype.DEFENSIVE],
 ]
 
 ## --- 난이도: 상대 능력치 배율 + 등장 확률 + 보상 배율 ---

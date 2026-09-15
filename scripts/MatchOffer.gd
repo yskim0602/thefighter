@@ -2,8 +2,7 @@ extends Control
 
 ## "새로운 경기 제의가 도착했습니다" 화면. MatchGenerator로 다음 상대를 뽑아
 ## VS 구도로 보여주고, 수락하면 MatchContext에 담아 전투로 이동한다. 거절을
-## 누르면 확인창을 띄우고, 확인하면 CareerData의 페널티를 적용한 뒤 새 제의를
-## 다시 뽑는다.
+## 누르면 페널티 없이 바로 다른 상대로 다시 뽑는다.
 
 const AMBIENT_COLOR_START := Color(0.55, 0.5, 0.45)
 const AMBIENT_COLOR_END := Color(0.9, 0.85, 0.7)
@@ -25,7 +24,7 @@ const TAG_COLORS := {
 @onready var arena_environment: Environment = $ArenaViewportContainer/ArenaViewport/ArenaScene/WorldEnvironment.environment
 @onready var arena_bulb: OmniLight3D = $ArenaViewportContainer/ArenaViewport/ArenaScene/BulbLight
 
-@onready var stage_record_label: Label = $TopBar/TopBarRow/StageRecordLabel
+@onready var stage_record_label: Label = $TopBar/TopBarContent/StageRecordLabel
 
 @onready var tag_badge: PanelContainer = $TagBadge
 @onready var tag_label: Label = $TagBadge/TagLabel
@@ -43,9 +42,6 @@ const TAG_COLORS := {
 
 @onready var accept_button: Button = $ButtonArea/AcceptButton
 @onready var reject_button: Button = $ButtonArea/RejectButton
-
-@onready var decline_confirm: Control = $DeclineConfirm
-@onready var decline_penalty_label: Label = $DeclineConfirm/CenterContainer/Panel/VBox/PenaltyLabel
 
 @onready var fade_nodes: Array = [
 	$ArenaViewportContainer, $OpponentInfoPanel, $MyFighterInfoPanel,
@@ -83,7 +79,7 @@ func _refresh() -> void:
 
 	opponent_name_label.text = offer.opponent_name
 	opponent_record_label.text = offer.record_text()
-	opponent_style_label.text = "%s (%s)" % [FightingStyle.style_name(offer.style), offer.archetype_name()]
+	opponent_style_label.text = offer.archetype_name()
 	opponent_difficulty_label.text = offer.difficulty_stars()
 
 	reward_label.text = "%d G      +%d FANS      +%d FAME" % [offer.money_reward, offer.fan_reward, offer.fame_reward]
@@ -121,23 +117,5 @@ func _on_accept_pressed() -> void:
 
 
 func _on_reject_pressed() -> void:
-	decline_penalty_label.text = _penalty_text(current_offer)
-	decline_confirm.visible = true
-
-
-func _penalty_text(offer: OpponentOffer) -> String:
-	if offer.is_important():
-		return "명성 -%d   팬 -%d" % [CareerConfig.DECLINE_FAME_PENALTY_IMPORTANT, CareerConfig.DECLINE_FAN_PENALTY_IMPORTANT]
-	return "가벼운 페널티만 있습니다"
-
-
-func _on_decline_confirm_pressed() -> void:
-	decline_confirm.visible = false
-	SaveManager.career.apply_decline_penalty(current_offer)
-	SaveManager.save()
 	_new_offer()
 	_play_intro()
-
-
-func _on_decline_cancel_pressed() -> void:
-	decline_confirm.visible = false

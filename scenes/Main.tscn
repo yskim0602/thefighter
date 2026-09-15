@@ -84,7 +84,17 @@ offset_top = 56.0
 offset_right = 200.0
 offset_bottom = 76.0
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
-text = "복싱"
+text = "복서"
+
+[node name="PlayerResultLabel" type="Label" parent="UI/HUD"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 82.0
+offset_right = 200.0
+offset_bottom = 116.0
+theme_override_font_sizes/font_size = 26
+text = "WIN"
+visible = false
 
 [node name="EnemyHealthBar" type="ProgressBar" parent="UI/HUD"]
 layout_mode = 0
@@ -118,7 +128,20 @@ offset_right = -24.0
 offset_bottom = 76.0
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 horizontal_alignment = 2
-text = "레슬링"
+text = "난전형"
+
+[node name="EnemyResultLabel" type="Label" parent="UI/HUD"]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 82.0
+offset_right = -24.0
+offset_bottom = 116.0
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 2
+text = "LOSE"
+visible = false
 
 [node name="PauseButton" type="Button" parent="UI/HUD"]
 process_mode = 3

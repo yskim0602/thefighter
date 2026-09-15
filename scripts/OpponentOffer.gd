@@ -8,7 +8,6 @@ extends RefCounted
 var opponent_name: String = "무명 파이터"
 var wins: int = 0
 var losses: int = 0
-var style: int = 0  # FightingStyle.Style 값
 var archetype: int = CareerConfig.Archetype.BOXER
 var difficulty: int = CareerConfig.Difficulty.EVEN
 var stat_multiplier: float = 1.0
@@ -57,10 +56,3 @@ func tag_text() -> String:
 	if is_main_event:
 		return "MAIN EVENT"
 	return "STANDARD FIGHT"
-
-
-## 거절 시 보여줄 페널티 여부. 중요 경기(라이벌/승급전/타이틀전/메인 이벤트)는
-## 거절하면 명성/팬이 깎인다.
-func is_important() -> bool:
-	return is_rival or is_promotion_match or is_title_shot or is_championship \
-		or is_title_defense or is_main_event

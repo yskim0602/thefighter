@@ -159,14 +159,6 @@ func _register_title_defense_result(won: bool) -> void:
 		is_legend = true
 
 
-## 경기 제의를 거절했을 때의 페널티. 중요한 경기일수록 명성/팬이 깎인다.
-func apply_decline_penalty(offer: OpponentOffer) -> void:
-	if not offer.is_important():
-		return
-	fame = max(fame - CareerConfig.DECLINE_FAME_PENALTY_IMPORTANT, 0)
-	fans = max(fans - CareerConfig.DECLINE_FAN_PENALTY_IMPORTANT, 0)
-
-
 func to_dict() -> Dictionary:
 	return {
 		"fight_money": fight_money,
@@ -184,7 +176,6 @@ func to_dict() -> Dictionary:
 		"fame": fame,
 		"rivals": rivals,
 		"fighter_name": stats.fighter_name,
-		"style": stats.style,
 		"power": stats.power,
 		"stamina": stats.stamina,
 		"speed": stats.speed,
@@ -208,7 +199,6 @@ func from_dict(data: Dictionary) -> void:
 	fame = data.get("fame", fame)
 	rivals = data.get("rivals", rivals)
 	stats.fighter_name = data.get("fighter_name", stats.fighter_name)
-	stats.style = data.get("style", stats.style)
 	stats.power = data.get("power", stats.power)
 	stats.stamina = data.get("stamina", stats.stamina)
 	stats.speed = data.get("speed", stats.speed)

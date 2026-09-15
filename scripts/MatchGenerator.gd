@@ -40,7 +40,6 @@ static func _base_offer(career: CareerData) -> OpponentOffer:
 	offer.difficulty = difficulty
 	offer.stat_multiplier = CareerConfig.DIFFICULTY_STAT_MULT[difficulty]
 	offer.archetype = _random_archetype(career.stage)
-	offer.style = randi() % 5  # FightingStyle.Style 값 개수(5)에 맞춤
 	offer.opponent_name = _random_name()
 	offer.wins = randi_range(2, 8) + career.stage * 3
 	offer.losses = randi_range(1, 6)

@@ -1,7 +1,7 @@
 extends Fighter
 
-## Human-controlled fighter: WASD to move/strafe, J to punch, K to kick,
-## hold L to block. Facing the opponent is handled by Fighter._face_opponent().
+## Human-controlled fighter: WASD to move/strafe, J to punch, hold L to
+## block. Facing the opponent is handled by Fighter._face_opponent().
 
 
 func _ready() -> void:
@@ -35,5 +35,3 @@ func _handle_input() -> void:
 
 	if Input.is_action_just_pressed("attack_punch"):
 		try_punch()
-	if Input.is_action_just_pressed("attack_kick"):
-		try_kick()

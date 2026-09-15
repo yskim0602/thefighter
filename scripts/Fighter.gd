@@ -1,8 +1,8 @@
 class_name Fighter
 extends CharacterBody3D
 
-## Shared logic for any fighter in the cage: movement/gravity, health,
-## punch/kick/block, hit feedback and knockout. PlayerController.gd and
+## Shared logic for any fighter in the ring: movement/gravity, health,
+## punch/block, hit feedback and knockout. PlayerController.gd and
 ## AIController.gd extend this and only decide *when* to move/attack.
 
 signal health_changed(current: float, max_value: float)
@@ -13,7 +13,6 @@ const ARENA_RADIUS := 7.0
 
 const STAGGER_TIME := 0.35
 const BASE_PUNCH_COOLDOWN := 0.5
-const BASE_KICK_COOLDOWN := 0.9
 const ATTACK_RANGE := 2.2
 const BLOCK_DAMAGE_MULT := 0.2
 
@@ -26,7 +25,6 @@ var is_staggered := false
 var is_ko := false
 
 var _punch_cooldown_left := 0.0
-var _kick_cooldown_left := 0.0
 var _stagger_timer := 0.0
 var _base_color := Color.WHITE
 
@@ -61,8 +59,6 @@ func _physics_process(delta: float) -> void:
 
 	if _punch_cooldown_left > 0.0:
 		_punch_cooldown_left -= delta
-	if _kick_cooldown_left > 0.0:
-		_kick_cooldown_left -= delta
 
 	_face_opponent()
 	move_and_slide()
@@ -95,21 +91,11 @@ func try_punch() -> void:
 	_resolve_attack(stats.get_punch_damage())
 
 
-func try_kick() -> void:
-	if is_ko or is_staggered or _kick_cooldown_left > 0.0:
-		return
-	_kick_cooldown_left = BASE_KICK_COOLDOWN * stats.get_attack_cooldown_mult()
-	_play_attack_lunge()
-	await get_tree().create_timer(0.25).timeout
-	_resolve_attack(stats.get_kick_damage())
-
-
 func _resolve_attack(base_damage: float) -> void:
 	if is_ko or opponent == null or opponent.is_ko:
 		return
 	if global_position.distance_to(opponent.global_position) <= ATTACK_RANGE:
-		var advantage := FightingStyle.get_advantage_multiplier(stats.style, opponent.stats.style)
-		opponent.take_damage(base_damage * advantage)
+		opponent.take_damage(base_damage)
 
 
 func _play_attack_lunge() -> void:

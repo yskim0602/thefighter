@@ -20,7 +20,7 @@ const BULB_ENERGY_END := 4.0
 @onready var arena_environment: Environment = $ArenaViewportContainer/ArenaViewport/ArenaScene/WorldEnvironment.environment
 @onready var arena_bulb: OmniLight3D = $ArenaViewportContainer/ArenaViewport/ArenaScene/BulbLight
 
-@onready var money_label: Label = $TopBar/TopBarRow/MoneyLabel
+@onready var money_label: Label = $TopBar/TopBarContent/RightRow/MoneyLabel
 @onready var stage_name_label: Label = $StageNameLabel
 
 @onready var record_label: Label = $InfoPanel/InfoVBox/RecordLabel

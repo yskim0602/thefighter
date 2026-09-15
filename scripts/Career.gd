@@ -31,7 +31,7 @@ func _refresh() -> void:
 
 func _stage_bg_color(stage: int) -> Color:
 	var stage_count := CareerData.STAGE_NAMES.size()
-	var t := clamp(float(stage) / float(stage_count - 1), 0.0, 1.0)
+	var t: float = clamp(float(stage) / float(stage_count - 1), 0.0, 1.0)
 	return STAGE_BG_START.lerp(STAGE_BG_END, t)
 
 

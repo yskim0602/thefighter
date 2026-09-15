@@ -225,8 +225,10 @@ text = "UNDERGROUND"
 layout_mode = 1
 anchor_left = 0.03
 anchor_top = 0.48
-anchor_right = 0.4
-anchor_bottom = 0.665
+anchor_right = 0.03
+anchor_bottom = 0.48
+grow_horizontal = 1
+grow_vertical = 1
 
 [node name="InfoVBox" type="VBoxContainer" parent="InfoPanel"]
 layout_mode = 2
@@ -274,11 +276,15 @@ layout_mode = 2
 size_flags_horizontal = 0
 text = "캐릭터"
 
+[node name="StageButton" type="Button" parent="BottomBar/BottomVBox/MenuIconRow"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "스테이지"
+
 [node name="HistoryButton" type="Button" parent="BottomBar/BottomVBox/MenuIconRow"]
 layout_mode = 2
 size_flags_horizontal = 0
-disabled = true
-text = "기록 (준비중)"
+text = "기록"
 
 [node name="ShopButton" type="Button" parent="BottomBar/BottomVBox/MenuIconRow"]
 layout_mode = 2
@@ -301,4 +307,6 @@ theme_override_colors/font_disabled_color = Color(0.5, 0.5, 0.55, 1)
 text = "FIGHT"
 
 [connection signal="pressed" from="BottomBar/BottomVBox/MenuIconRow/CharacterButton" to="." method="_on_character_pressed"]
+[connection signal="pressed" from="BottomBar/BottomVBox/MenuIconRow/StageButton" to="." method="_on_stage_pressed"]
+[connection signal="pressed" from="BottomBar/BottomVBox/MenuIconRow/HistoryButton" to="." method="_on_history_pressed"]
 [connection signal="pressed" from="BottomBar/BottomVBox/FightButton" to="." method="_on_fight_pressed"]

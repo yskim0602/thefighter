@@ -1,8 +1,8 @@
 class_name CareerData
 extends RefCounted
 
-## 세이브되는 커리어 진행 상태 (파이트머니, 전적, 무대 단계, 랭크, 팬/명성,
-## 라이벌, 능력치). Resource가 아니라 순수 데이터 클래스로 만들어서 JSON으로
+## 세이브되는 커리어 진행 상태 (파이트머니, 전적, 스테이지별 전적, 무대 단계,
+## 랭크, 팬/명성, 라이벌, 능력치). Resource가 아니라 순수 데이터 클래스로 만들어서 JSON으로
 ## 직접 저장/불러오기 한다 (씬 파일이 커스텀 리소스 타입을 직접 참조할 때
 ## 생기는 로딩 타이밍 문제를 피하기 위함 - scripts/CharacterStats.gd 참고).
 ##
@@ -62,6 +62,11 @@ var fame: int = 0
 ## [{"name": String, "defeated": bool}, ...]
 var rivals: Array = []
 
+## 스테이지별 전적. 인덱스 = Stage 값, [{"wins": int, "losses": int}, ...].
+## 필요할 때(_record_stage_result)만 그때그때 늘어난다 - 아직 한 번도
+## 싸우지 않은 스테이지는 배열에 항목 자체가 없다. 기록 화면(RecordMenu)이 쓴다.
+var stage_record: Array = []
+
 
 func stage_name() -> String:
 	if stage >= 0 and stage < STAGE_NAMES.size():
@@ -77,6 +82,7 @@ func is_ranked_stage() -> bool:
 ## Main.gd가 결과 화면 문구를 만들 때 쓴다.
 func register_result(won: bool, offer: OpponentOffer) -> Dictionary:
 	var progress := {"promoted": false, "stage_failed": false, "became_champion": false}
+	var fought_stage := stage  # 승급으로 stage가 바뀌기 전에, 실제로 싸운 스테이지를 기억해둔다.
 
 	if won and offer.is_rival:
 		for rival in rivals:
@@ -94,6 +100,8 @@ func register_result(won: bool, offer: OpponentOffer) -> Dictionary:
 	else:
 		_register_regular_result(won, progress)
 
+	_record_stage_result(fought_stage, won)
+
 	if won:
 		wins += 1
 		fight_money += offer.money_reward
@@ -105,6 +113,15 @@ func register_result(won: bool, offer: OpponentOffer) -> Dictionary:
 		fans += int(offer.fan_reward * 0.1)
 
 	return progress
+
+
+func _record_stage_result(stage_index: int, won: bool) -> void:
+	while stage_record.size() <= stage_index:
+		stage_record.append({"wins": 0, "losses": 0})
+	if won:
+		stage_record[stage_index]["wins"] += 1
+	else:
+		stage_record[stage_index]["losses"] += 1
 
 
 func _register_regular_result(won: bool, progress: Dictionary) -> void:
@@ -175,6 +192,7 @@ func to_dict() -> Dictionary:
 		"fans": fans,
 		"fame": fame,
 		"rivals": rivals,
+		"stage_record": stage_record,
 		"fighter_name": stats.fighter_name,
 		"power": stats.power,
 		"stamina": stats.stamina,
@@ -198,6 +216,7 @@ func from_dict(data: Dictionary) -> void:
 	fans = data.get("fans", fans)
 	fame = data.get("fame", fame)
 	rivals = data.get("rivals", rivals)
+	stage_record = data.get("stage_record", stage_record)
 	stats.fighter_name = data.get("fighter_name", stats.fighter_name)
 	stats.power = data.get("power", stats.power)
 	stats.stamina = data.get("stamina", stats.stamina)

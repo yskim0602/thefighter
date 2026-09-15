@@ -67,5 +67,13 @@ func _on_character_pressed() -> void:
 	Nav.go_to("res://scenes/CharacterMenu.tscn")
 
 
+func _on_stage_pressed() -> void:
+	Nav.go_to("res://scenes/StageMenu.tscn")
+
+
+func _on_history_pressed() -> void:
+	Nav.go_to("res://scenes/RecordMenu.tscn")
+
+
 func _on_fight_pressed() -> void:
 	Nav.go_to("res://scenes/MatchOffer.tscn")

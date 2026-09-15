@@ -21,6 +21,12 @@ func get_move_speed() -> float:
 	return 3.0 + speed * 0.05
 
 
+## 스태미나 게이지 최대치. 체력(get_max_health)과는 별개로, 펀치/회피마다
+## 소모되고 시간이 지나면 회복되는 자원이다 - Fighter.gd 참고.
+func get_max_stamina() -> float:
+	return 50.0 + stamina * 3.0
+
+
 func get_punch_damage() -> float:
 	return 4.0 + power * 0.4
 

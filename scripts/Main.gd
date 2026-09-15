@@ -12,9 +12,12 @@ const LOSE_COLOR := Color(0.9, 0.35, 0.35)
 @onready var camera: Camera3D = $Camera3D
 @onready var player_bar: ProgressBar = $UI/HUD/PlayerHealthBar
 @onready var enemy_bar: ProgressBar = $UI/HUD/EnemyHealthBar
+@onready var player_stamina_bar: ProgressBar = $UI/HUD/PlayerStaminaBar
+@onready var enemy_stamina_bar: ProgressBar = $UI/HUD/EnemyStaminaBar
 @onready var result_label: Label = $UI/HUD/ResultLabel
 @onready var player_result_label: Label = $UI/HUD/PlayerResultLabel
 @onready var enemy_result_label: Label = $UI/HUD/EnemyResultLabel
+@onready var down_label: Label = $UI/HUD/DownLabel
 @onready var round_timer_label: Label = $UI/HUD/RoundTimer
 @onready var player_style_label: Label = $UI/HUD/PlayerStyleLabel
 @onready var enemy_style_label: Label = $UI/HUD/EnemyStyleLabel
@@ -34,14 +37,23 @@ func _ready() -> void:
 	enemy.opponent = player
 	player.health_changed.connect(_on_player_health_changed)
 	enemy.health_changed.connect(_on_enemy_health_changed)
+	player.stamina_changed.connect(_on_player_stamina_changed)
+	enemy.stamina_changed.connect(_on_enemy_stamina_changed)
+	player.knocked_down.connect(func(count: int): _on_fighter_down(count))
+	enemy.knocked_down.connect(func(count: int): _on_fighter_down(count))
+	player.recovered_from_down.connect(_on_fighter_recovered)
+	enemy.recovered_from_down.connect(_on_fighter_recovered)
 	player.knocked_out.connect(func(): _finish_fight(false, "KO 패배"))
 	enemy.knocked_out.connect(func(): _finish_fight(true, "KO 승리"))
 
 	result_label.visible = false
 	player_result_label.visible = false
 	enemy_result_label.visible = false
+	down_label.visible = false
 	_on_player_health_changed(player.health, player.get_effective_max_health())
 	_on_enemy_health_changed(enemy.health, enemy.get_effective_max_health())
+	_on_player_stamina_changed(player.stamina, player.get_effective_max_stamina())
+	_on_enemy_stamina_changed(enemy.stamina, enemy.get_effective_max_stamina())
 	player_style_label.text = BoxingStyle.style_name(player.style)
 
 
@@ -72,6 +84,25 @@ func _on_player_health_changed(current: float, max_h: float) -> void:
 func _on_enemy_health_changed(current: float, max_h: float) -> void:
 	enemy_bar.max_value = max_h
 	enemy_bar.value = current
+
+
+func _on_player_stamina_changed(current: float, max_s: float) -> void:
+	player_stamina_bar.max_value = max_s
+	player_stamina_bar.value = current
+
+
+func _on_enemy_stamina_changed(current: float, max_s: float) -> void:
+	enemy_stamina_bar.max_value = max_s
+	enemy_stamina_bar.value = current
+
+
+func _on_fighter_down(count: int) -> void:
+	down_label.text = "DOWN! (%d/%d)" % [count, Fighter.MAX_KNOCKDOWNS]
+	down_label.visible = true
+
+
+func _on_fighter_recovered() -> void:
+	down_label.visible = false
 
 
 func _finish_fight(player_won: bool, reason: String) -> void:
@@ -123,6 +154,7 @@ func _restart() -> void:
 	result_label.visible = false
 	player_result_label.visible = false
 	enemy_result_label.visible = false
+	down_label.visible = false
 	player.reset_fighter(player_spawn)
 	enemy.reset_fighter(enemy_spawn)
 

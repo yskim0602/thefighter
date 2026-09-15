@@ -1,7 +1,10 @@
 extends Fighter
 
-## Human-controlled fighter: WASD to move/strafe, J to punch, hold L to
-## block. Facing the opponent is handled by Fighter._face_opponent().
+## Human-controlled fighter: WASD to move/strafe, J/K/I/O to throw
+## jab/straight/hook/uppercut, hold L to block, Space to dodge (in the
+## direction you're moving, or backward away from the opponent if you're
+## standing still). While down, any punch button mashes the get-up count
+## down faster. Facing the opponent is handled by Fighter._face_opponent().
 ##
 ## The player doesn't pick a boxing style directly - it's inferred from how
 ## their stats have grown through training (BoxingStyle.infer_style), so
@@ -16,28 +19,44 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not is_ko and not is_staggered:
-		_handle_input()
-	else:
+	if is_down:
+		if Input.is_action_just_pressed("attack_jab"):
+			mash_get_up()
 		velocity.x = 0.0
 		velocity.z = 0.0
+	elif is_ko or is_staggered or is_dodging:
+		velocity.x = 0.0
+		velocity.z = 0.0
+	else:
+		_handle_input()
 	super._physics_process(delta)
 
 
 func _handle_input() -> void:
+	var input_dir := Vector2(
+		Input.get_axis("move_left", "move_right"),
+		Input.get_axis("move_forward", "move_back")
+	)
+
+	if Input.is_action_just_pressed("dodge"):
+		if try_dodge(Vector3(input_dir.x, 0.0, input_dir.y)):
+			return
+
 	is_blocking = Input.is_action_pressed("attack_block")
 	if is_blocking:
 		velocity.x = 0.0
 		velocity.z = 0.0
 		return
 
-	var input_dir := Vector2(
-		Input.get_axis("move_left", "move_right"),
-		Input.get_axis("move_forward", "move_back")
-	)
 	var move_speed := get_effective_move_speed()
 	velocity.x = input_dir.x * move_speed
 	velocity.z = input_dir.y * move_speed
 
-	if Input.is_action_just_pressed("attack_punch"):
-		try_punch()
+	if Input.is_action_just_pressed("attack_jab"):
+		try_punch(PunchType.Type.JAB)
+	elif Input.is_action_just_pressed("attack_straight"):
+		try_punch(PunchType.Type.STRAIGHT)
+	elif Input.is_action_just_pressed("attack_hook"):
+		try_punch(PunchType.Type.HOOK)
+	elif Input.is_action_just_pressed("attack_uppercut"):
+		try_punch(PunchType.Type.UPPERCUT)

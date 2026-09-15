@@ -49,7 +49,7 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("restart"):
 		_restart()
 	if Input.is_action_just_pressed("return_to_menu"):
-		Nav.go_home()
+		Nav.go_to("res://scenes/MatchOffer.tscn")
 
 
 func _update_camera() -> void:
@@ -76,21 +76,31 @@ func _finish_fight(player_won: bool, reason: String) -> void:
 	round_over = true
 
 	var career := SaveManager.career
-	var reward: int
-	var outcome_text: String
-	if player_won:
-		career.wins += 1
-		reward = 100 + career.wins * 10
-		outcome_text = "승리! (%s)" % reason
-	else:
-		career.losses += 1
-		reward = 20
-		outcome_text = "패배... (%s)" % reason
-	career.fight_money += reward
-	career.update_stage_from_wins()
+	var offer := MatchContext.current_offer
+	if offer == null:
+		offer = OpponentOffer.new()  # 제의 없이 씬을 바로 실행한 경우를 위한 안전망.
+
+	var progress := career.register_result(player_won, offer)
 	SaveManager.save()
 
-	result_label.text = "%s\n+%d G\n\nR: 재대결   M: 커리어로" % [outcome_text, reward]
+	var outcome_text: String
+	var reward_amount: int
+	if player_won:
+		outcome_text = "승리! (%s)" % reason
+		reward_amount = offer.money_reward
+	else:
+		outcome_text = "패배... (%s)" % reason
+		reward_amount = int(offer.money_reward * 0.2)
+
+	var extra_text := ""
+	if progress.get("promoted", false):
+		extra_text += "\n%s 승급!" % career.stage_name()
+	if progress.get("stage_failed", false):
+		extra_text += "\n승급 실패... 같은 무대에서 다시 도전합니다"
+	if progress.get("became_champion", false):
+		extra_text += "\n챔피언 등극!"
+
+	result_label.text = "%s\n+%d G%s\n\nR: 재대결   M: 다음 경기 제의" % [outcome_text, reward_amount, extra_text]
 	result_label.visible = true
 
 

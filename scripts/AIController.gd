@@ -1,31 +1,85 @@
 extends Fighter
 
-## Simple reactive CPU opponent: closes the distance, then randomly
-## punches, kicks or blocks once in range. Not smart, just a placeholder
-## to spar against while you build out real mechanics/animations.
+## CPU 상대. 능력치/스타일은 MatchContext.current_offer(수락한 경기 제의)에서
+## 가져오고, 전투 스타일(archetype)에 따라 이동/공격/블록 파라미터를 다르게
+## 적용한다. 실제 고급 AI(상태머신, 애니메이션 연동)는 나중 단계 작업이고,
+## 지금은 기존 단순 AI의 파라미터를 archetype별로 조정하는 정도로 구조만
+## 확장해뒀다.
 
-const AI_ATTACK_MIN_INTERVAL := 0.8
-const AI_ATTACK_MAX_INTERVAL := 1.8
-const AI_BLOCK_CHANCE := 0.25
-const AI_PUNCH_CHANCE := 0.65
-const AI_BLOCK_DURATION := 0.6
-const AI_APPROACH_SPEED_MULT := 0.8
+var attack_min_interval := 0.8
+var attack_max_interval := 1.8
+var block_chance := 0.25
+var punch_chance := 0.65
+var block_duration := 0.6
+var approach_speed_mult := 0.8
 
 var _decision_timer := 0.0
 var _block_timer := 0.0
+var _archetype: int = -1
 
 
 func _ready() -> void:
-	# 플레이어가 승수를 쌓을수록 상대도 조금씩 강해진다 (훈련할 이유를 유지).
-	var win_bonus := int(SaveManager.career.wins / 3)
+	var offer := MatchContext.current_offer
 	stats = CharacterStats.new()
-	stats.fighter_name = "지하 레슬러"
-	stats.style = 2  # 레슬링
-	stats.power = 14 + win_bonus
-	stats.stamina = 14 + win_bonus
-	stats.speed = 10 + win_bonus
-	stats.skill = 12 + win_bonus
+	if offer != null:
+		var stage := SaveManager.career.stage
+		var base_stat := 12 + stage * 2
+		stats.fighter_name = offer.opponent_name
+		stats.style = offer.style
+		stats.power = int(base_stat * offer.stat_multiplier)
+		stats.stamina = int(base_stat * offer.stat_multiplier)
+		stats.speed = int((10 + stage) * offer.stat_multiplier)
+		stats.skill = int((10 + stage) * offer.stat_multiplier)
+		_archetype = offer.archetype
+		_apply_archetype_tuning(offer.archetype)
+	else:
+		# MatchContext에 제의가 없는 상태로 씬을 바로 실행한 경우(에디터 테스트 등)를
+		# 위한 안전한 기본값 - 예전의 "지하 레슬러" 고정 상대.
+		var win_bonus := int(SaveManager.career.wins / 3)
+		stats.fighter_name = "지하 레슬러"
+		stats.style = 2  # 레슬링
+		stats.power = 14 + win_bonus
+		stats.stamina = 14 + win_bonus
+		stats.speed = 10 + win_bonus
+		stats.skill = 12 + win_bonus
 	super._ready()
+	if _archetype == CareerConfig.Archetype.COUNTER:
+		health_changed.connect(_on_self_damaged)
+
+
+## 스타일별로 기존 파라미터를 다르게 튜닝한다. 값 자체는 예시 수준이고,
+## 나중에 실제 밸런스에 맞춰 조정하면 된다.
+func _apply_archetype_tuning(archetype: int) -> void:
+	match archetype:
+		CareerConfig.Archetype.BOXER:
+			punch_chance = 0.85
+			block_chance = 0.15
+		CareerConfig.Archetype.KICKBOXER:
+			punch_chance = 0.5
+			block_chance = 0.2
+		CareerConfig.Archetype.BRAWLER:
+			attack_min_interval = 0.4
+			attack_max_interval = 0.9
+			block_chance = 0.05
+			approach_speed_mult = 1.1
+		CareerConfig.Archetype.COUNTER:
+			block_chance = 0.45
+			attack_min_interval = 1.0
+			attack_max_interval = 2.2
+		CareerConfig.Archetype.GRAPPLER:
+			punch_chance = 0.4
+			block_chance = 0.2
+			approach_speed_mult = 1.0
+		CareerConfig.Archetype.DEFENSIVE:
+			block_chance = 0.55
+			attack_min_interval = 1.2
+			attack_max_interval = 2.4
+
+
+## 카운터형: 얻어맞은 직후 곧바로 다시 판단해서 반격을 노린다.
+func _on_self_damaged(_current: float, _max_health: float) -> void:
+	if not is_ko and not is_staggered:
+		_decision_timer = 0.0
 
 
 func _physics_process(delta: float) -> void:
@@ -50,7 +104,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _make_decision() -> void:
-	_decision_timer = randf_range(AI_ATTACK_MIN_INTERVAL, AI_ATTACK_MAX_INTERVAL)
+	_decision_timer = randf_range(attack_min_interval, attack_max_interval)
 	if opponent == null:
 		return
 
@@ -60,16 +114,16 @@ func _make_decision() -> void:
 		dir.y = 0.0
 		dir = dir.normalized()
 		var move_speed := stats.get_move_speed()
-		velocity.x = dir.x * move_speed * AI_APPROACH_SPEED_MULT
-		velocity.z = dir.z * move_speed * AI_APPROACH_SPEED_MULT
+		velocity.x = dir.x * move_speed * approach_speed_mult
+		velocity.z = dir.z * move_speed * approach_speed_mult
 		return
 
 	velocity.x = 0.0
 	velocity.z = 0.0
 	var roll := randf()
-	if roll < AI_BLOCK_CHANCE:
-		_block_timer = AI_BLOCK_DURATION
-	elif roll < AI_PUNCH_CHANCE:
+	if roll < block_chance:
+		_block_timer = block_duration
+	elif roll < punch_chance:
 		try_punch()
 	else:
 		try_kick()

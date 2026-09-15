@@ -198,56 +198,22 @@ size_flags_horizontal = 0
 disabled = true
 icon = ExtResource("2")
 
-[node name="StageBar" type="HBoxContainer" parent="."]
+[node name="StageNameLabel" type="Label" parent="."]
 layout_mode = 1
-anchor_left = 0.04
+anchor_left = 0.0
+anchor_right = 1.0
 anchor_top = 0.1
-anchor_right = 0.96
-anchor_bottom = 0.22
-theme_override_constants/separation = 12
-
-[node name="PrevButton" type="Button" parent="StageBar"]
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-text = "◀"
-
-[node name="StageCenterVBox" type="VBoxContainer" parent="StageBar"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 2
-
-[node name="PrevPeekLabel" type="Label" parent="StageBar/StageCenterVBox"]
-layout_mode = 2
+anchor_bottom = 0.2
+mouse_filter = 2
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.55, 0.55, 0.6, 1)
-text = " "
-
-[node name="StageNameLabel" type="Label" parent="StageBar/StageCenterVBox"]
-layout_mode = 2
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 32
 text = "UNDERGROUND"
-
-[node name="NextPeekLabel" type="Label" parent="StageBar/StageCenterVBox"]
-layout_mode = 2
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.55, 0.55, 0.6, 1)
-text = " "
-
-[node name="NextButton" type="Button" parent="StageBar"]
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-text = "▶"
 
 [node name="InfoPanel" type="PanelContainer" parent="."]
 layout_mode = 1
 anchor_left = 0.03
 anchor_top = 0.48
-anchor_right = 0.36
+anchor_right = 0.4
 anchor_bottom = 0.665
 
 [node name="InfoVBox" type="VBoxContainer" parent="InfoPanel"]
@@ -257,23 +223,23 @@ theme_override_constants/separation = 4
 [node name="RecordLabel" type="Label" parent="InfoPanel/InfoVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "RECORD   0 - 0"
+text = "RECORD   0 W / 0 L"
 
-[node name="RankLabel" type="Label" parent="InfoPanel/InfoVBox"]
+[node name="ProgressLabel" type="Label" parent="InfoPanel/InfoVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "RANK   UNDERGROUND"
+text = "승급 조건   7승 달성 (0/10경기)"
 
-[node name="NextFightLabel" type="Label" parent="InfoPanel/InfoVBox"]
+[node name="FansLabel" type="Label" parent="InfoPanel/InfoVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "NEXT FIGHT   UNDERGROUND #1"
+text = "FANS   0"
 
-[node name="RewardLabel" type="Label" parent="InfoPanel/InfoVBox"]
+[node name="FameLabel" type="Label" parent="InfoPanel/InfoVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
-text = "REWARD   +110 G"
+text = "FAME   0"
 
 [node name="BottomBar" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -322,15 +288,5 @@ theme_override_colors/font_pressed_color = Color(1, 0.9, 0.9, 1)
 theme_override_colors/font_disabled_color = Color(0.5, 0.5, 0.55, 1)
 text = "FIGHT"
 
-[node name="LockedHintLabel" type="Label" parent="BottomBar/BottomVBox"]
-layout_mode = 2
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.6, 0.6, 0.65, 1)
-text = "잠긴 무대입니다"
-visible = false
-
-[connection signal="pressed" from="StageBar/PrevButton" to="." method="_on_prev_stage_pressed"]
-[connection signal="pressed" from="StageBar/NextButton" to="." method="_on_next_stage_pressed"]
 [connection signal="pressed" from="BottomBar/BottomVBox/MenuIconRow/CharacterButton" to="." method="_on_character_pressed"]
 [connection signal="pressed" from="BottomBar/BottomVBox/FightButton" to="." method="_on_fight_pressed"]

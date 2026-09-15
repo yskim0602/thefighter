@@ -100,7 +100,7 @@ anchor_left = 0.05
 anchor_right = 0.6
 anchor_top = 0.015
 anchor_bottom = 0.05
-text = "등급: 지하 파이트"
+text = "무대: UNDERGROUND"
 
 [node name="MoneyLabel" type="Label" parent="."]
 layout_mode = 1

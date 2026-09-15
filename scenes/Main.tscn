@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/Enemy.tscn" id="3"]
+[ext_resource type="Texture2D" path="res://images/pause_icon.svg" id="4"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(16, 1, 16)
@@ -119,14 +120,25 @@ theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 horizontal_alignment = 2
 text = "레슬링"
 
+[node name="PauseButton" type="Button" parent="UI/HUD"]
+process_mode = 3
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -18.0
+offset_right = 18.0
+offset_top = 4.0
+offset_bottom = 40.0
+icon = ExtResource("4")
+
 [node name="RoundTimer" type="Label" parent="UI/HUD"]
 layout_mode = 0
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -30.0
-offset_top = 20.0
+offset_top = 52.0
 offset_right = 30.0
-offset_bottom = 60.0
+offset_bottom = 92.0
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 text = "99"
@@ -146,3 +158,62 @@ horizontal_alignment = 1
 vertical_alignment = 1
 text = "K.O.!"
 visible = false
+
+[node name="PauseLayer" type="CanvasLayer" parent="."]
+process_mode = 3
+layer = 10
+visible = false
+
+[node name="Dim" type="ColorRect" parent="PauseLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="PauseLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="PauseLayer/CenterContainer"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="PauseLayer/CenterContainer/Panel"]
+layout_mode = 2
+custom_minimum_size = Vector2(280, 0)
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="PauseLayer/CenterContainer/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+text = "일시정지"
+
+[node name="HSeparator1" type="HSeparator" parent="PauseLayer/CenterContainer/Panel/VBox"]
+layout_mode = 2
+
+[node name="ResumeButton" type="Button" parent="PauseLayer/CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "계속하기"
+
+[node name="RestartButton" type="Button" parent="PauseLayer/CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "다시하기"
+
+[node name="SettingsButton" type="Button" parent="PauseLayer/CenterContainer/Panel/VBox"]
+layout_mode = 2
+disabled = true
+text = "설정 (준비중)"
+
+[node name="ExitButton" type="Button" parent="PauseLayer/CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "나가기"
+
+[connection signal="pressed" from="UI/HUD/PauseButton" to="." method="_on_pause_button_pressed"]
+[connection signal="pressed" from="PauseLayer/CenterContainer/Panel/VBox/ResumeButton" to="." method="_on_resume_pressed"]
+[connection signal="pressed" from="PauseLayer/CenterContainer/Panel/VBox/RestartButton" to="." method="_on_pause_restart_pressed"]
+[connection signal="pressed" from="PauseLayer/CenterContainer/Panel/VBox/ExitButton" to="." method="_on_pause_exit_pressed"]

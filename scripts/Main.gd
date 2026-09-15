@@ -11,6 +11,7 @@ const ROUND_TIME := 99.0
 @onready var round_timer_label: Label = $UI/HUD/RoundTimer
 @onready var player_style_label: Label = $UI/HUD/PlayerStyleLabel
 @onready var enemy_style_label: Label = $UI/HUD/EnemyStyleLabel
+@onready var pause_layer: CanvasLayer = $PauseLayer
 
 var player_spawn: Vector3
 var enemy_spawn: Vector3
@@ -86,7 +87,7 @@ func _finish_fight(player_won: bool, reason: String) -> void:
 		reward = 20
 		outcome_text = "패배... (%s)" % reason
 	career.fight_money += reward
-	career.update_tier_from_wins()
+	career.update_stage_from_wins()
 	SaveManager.save()
 
 	result_label.text = "%s\n+%d G\n\nR: 재대결   M: 커리어로" % [outcome_text, reward]
@@ -99,3 +100,34 @@ func _restart() -> void:
 	result_label.visible = false
 	player.reset_fighter(player_spawn)
 	enemy.reset_fighter(enemy_spawn)
+
+
+func _on_pause_button_pressed() -> void:
+	if get_tree().paused:
+		_resume()
+	else:
+		_pause()
+
+
+func _pause() -> void:
+	get_tree().paused = true
+	pause_layer.visible = true
+
+
+func _resume() -> void:
+	get_tree().paused = false
+	pause_layer.visible = false
+
+
+func _on_resume_pressed() -> void:
+	_resume()
+
+
+func _on_pause_restart_pressed() -> void:
+	_resume()
+	_restart()
+
+
+func _on_pause_exit_pressed() -> void:
+	get_tree().paused = false
+	Nav.go_home()

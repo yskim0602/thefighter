@@ -8,7 +8,7 @@ extends RefCounted
 var opponent_name: String = "무명 파이터"
 var wins: int = 0
 var losses: int = 0
-var archetype: int = CareerConfig.Archetype.BOXER
+var archetype: int = BoxingStyle.Style.BOXER_PUNCHER
 var difficulty: int = CareerConfig.Difficulty.EVEN
 var stat_multiplier: float = 1.0
 
@@ -38,7 +38,7 @@ func difficulty_stars() -> String:
 
 
 func archetype_name() -> String:
-	return CareerConfig.ARCHETYPE_NAMES.get(archetype, "?")
+	return BoxingStyle.style_name(archetype)
 
 
 func record_text() -> String:

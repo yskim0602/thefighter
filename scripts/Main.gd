@@ -40,15 +40,14 @@ func _ready() -> void:
 	result_label.visible = false
 	player_result_label.visible = false
 	enemy_result_label.visible = false
-	_on_player_health_changed(player.health, player.stats.get_max_health())
-	_on_enemy_health_changed(enemy.health, enemy.stats.get_max_health())
-	player_style_label.text = "복서"
-	var offer := MatchContext.current_offer
-	enemy_style_label.text = offer.archetype_name() if offer != null else "복서"
+	_on_player_health_changed(player.health, player.get_effective_max_health())
+	_on_enemy_health_changed(enemy.health, enemy.get_effective_max_health())
+	player_style_label.text = BoxingStyle.style_name(player.style)
 
 
 func _process(delta: float) -> void:
 	_update_camera()
+	enemy_style_label.text = BoxingStyle.style_name(enemy.style)
 
 	if not round_over:
 		time_left = max(time_left - delta, 0.0)

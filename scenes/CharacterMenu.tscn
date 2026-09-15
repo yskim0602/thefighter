@@ -79,6 +79,11 @@ theme_override_constants/separation = 14
 layout_mode = 2
 text = "파이트머니: 0 G"
 
+[node name="StyleLabel" type="Label" parent="Body/ContentPanel/StatsPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+text = "현재 스타일: 복서-펀처"
+
 [node name="HSeparator1" type="HSeparator" parent="Body/ContentPanel/StatsPanel"]
 layout_mode = 2
 

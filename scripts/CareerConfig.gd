@@ -23,28 +23,21 @@ const RANK_LOSS_ON_DEFEAT := 1
 
 const TITLE_DEFENSES_FOR_LEGEND := 5
 
-## --- 상대 AI 스타일(archetype). 초반엔 일부만, 스테이지가 오를수록 다양해진다 ---
-enum Archetype { BOXER, BRAWLER, COUNTER, DEFENSIVE }
-
-const ARCHETYPE_NAMES := {
-	Archetype.BOXER: "복서",
-	Archetype.BRAWLER: "난전형",
-	Archetype.COUNTER: "카운터형",
-	Archetype.DEFENSIVE: "방어형",
-}
-
-## 인덱스 = CareerData.Stage 값. 스테이지가 오를수록 풀이 넓어지고 어려워진다.
+## --- 상대 AI의 기본 성향(archetype). 실제 값은 BoxingStyle.Style이다 -
+## 매치메이킹/표시용 "이 상대는 원래 어떤 스타일인가"이고, 경기 중에는
+## AIController.gd가 상황에 따라 실시간으로 다른 스타일로 전환한다
+## (BoxingStyle.gd 참고). 초반엔 일부만, 스테이지가 오를수록 다양해진다.
 const ARCHETYPE_POOL_BY_STAGE := [
-	[Archetype.BOXER, Archetype.BRAWLER],
-	[Archetype.BOXER, Archetype.BRAWLER],
-	[Archetype.BOXER, Archetype.BRAWLER, Archetype.DEFENSIVE],
-	[Archetype.BOXER, Archetype.BRAWLER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.BOXER, Archetype.BRAWLER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.BOXER, Archetype.BRAWLER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.BOXER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.BOXER, Archetype.DEFENSIVE, Archetype.COUNTER],
-	[Archetype.COUNTER, Archetype.DEFENSIVE],
-	[Archetype.COUNTER, Archetype.DEFENSIVE],
+	[BoxingStyle.Style.BOXER_PUNCHER, BoxingStyle.Style.IN_FIGHTER],
+	[BoxingStyle.Style.BOXER_PUNCHER, BoxingStyle.Style.IN_FIGHTER, BoxingStyle.Style.OUT_BOXER],
+	[BoxingStyle.Style.BOXER_PUNCHER, BoxingStyle.Style.IN_FIGHTER, BoxingStyle.Style.OUT_BOXER, BoxingStyle.Style.SLUGGER],
+	[BoxingStyle.Style.BOXER_PUNCHER, BoxingStyle.Style.IN_FIGHTER, BoxingStyle.Style.OUT_BOXER, BoxingStyle.Style.SLUGGER, BoxingStyle.Style.PRESSURE_FIGHTER],
+	[BoxingStyle.Style.OUT_BOXER, BoxingStyle.Style.SLUGGER, BoxingStyle.Style.PRESSURE_FIGHTER, BoxingStyle.Style.COUNTER_PUNCHER],
+	[BoxingStyle.Style.BOXER_PUNCHER, BoxingStyle.Style.IN_FIGHTER, BoxingStyle.Style.OUT_BOXER, BoxingStyle.Style.SLUGGER, BoxingStyle.Style.PRESSURE_FIGHTER, BoxingStyle.Style.COUNTER_PUNCHER],
+	[BoxingStyle.Style.OUT_BOXER, BoxingStyle.Style.SLUGGER, BoxingStyle.Style.PRESSURE_FIGHTER, BoxingStyle.Style.COUNTER_PUNCHER],
+	[BoxingStyle.Style.OUT_BOXER, BoxingStyle.Style.SLUGGER, BoxingStyle.Style.PRESSURE_FIGHTER, BoxingStyle.Style.COUNTER_PUNCHER],
+	[BoxingStyle.Style.COUNTER_PUNCHER, BoxingStyle.Style.PRESSURE_FIGHTER, BoxingStyle.Style.SLUGGER],
+	[BoxingStyle.Style.COUNTER_PUNCHER, BoxingStyle.Style.PRESSURE_FIGHTER, BoxingStyle.Style.SLUGGER],
 ]
 
 ## --- 난이도: 상대 능력치 배율 + 등장 확률 + 보상 배율 ---

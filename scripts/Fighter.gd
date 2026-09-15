@@ -3,7 +3,13 @@ extends CharacterBody3D
 
 ## Shared logic for any fighter in the ring: movement/gravity, health,
 ## punch/block, hit feedback and knockout. PlayerController.gd and
-## AIController.gd extend this and only decide *when* to move/attack.
+## AIController.gd extend this and only decide *when* to move/attack (and,
+## for the CPU, *which* boxing style to lean into right now).
+##
+## `style` (BoxingStyle.Style) scales every combat number computed from
+## `stats` - max health, movement, attack range, cooldown recovery, block
+## effectiveness - via BoxingStyle.profile(). Changing `style` mid-fight
+## (AIController does this) changes how the fighter behaves immediately.
 
 signal health_changed(current: float, max_value: float)
 signal knocked_out
@@ -17,6 +23,7 @@ const ATTACK_RANGE := 2.2
 const BLOCK_DAMAGE_MULT := 0.2
 
 @export var stats: CharacterStats
+var style: int = BoxingStyle.Style.BOXER_PUNCHER
 
 var health: float
 var opponent: Fighter = null
@@ -34,7 +41,7 @@ var _base_color := Color.WHITE
 func _ready() -> void:
 	if stats == null:
 		stats = CharacterStats.new()
-	health = stats.get_max_health()
+	health = get_effective_max_health()
 	var mat := mesh.get_surface_override_material(0)
 	if mat:
 		_base_color = mat.albedo_color
@@ -82,19 +89,38 @@ func _clamp_to_arena() -> void:
 		global_position.z = flat.y
 
 
+## 현재 스타일이 반영된 최대체력/이동속도/공격 사거리. CharacterStats가
+## 기본값을 만들고 BoxingStyle.profile(style)이 그 위에 배율을 곱한다.
+func get_effective_max_health() -> float:
+	var health_mult: float = BoxingStyle.profile(style).get("health", 1.0)
+	return stats.get_max_health() * health_mult
+
+
+func get_effective_move_speed() -> float:
+	var footwork_mult: float = BoxingStyle.profile(style).get("footwork", 1.0)
+	return stats.get_move_speed() * footwork_mult
+
+
+func get_effective_attack_range() -> float:
+	var range_mult: float = BoxingStyle.profile(style).get("range", 1.0)
+	return ATTACK_RANGE * range_mult
+
+
 func try_punch() -> void:
 	if is_ko or is_staggered or _punch_cooldown_left > 0.0:
 		return
-	_punch_cooldown_left = BASE_PUNCH_COOLDOWN * stats.get_attack_cooldown_mult()
+	var stamina_mult: float = BoxingStyle.profile(style).get("stamina", 1.0)
+	_punch_cooldown_left = BASE_PUNCH_COOLDOWN * stats.get_attack_cooldown_mult() / stamina_mult
 	_play_attack_lunge()
 	await get_tree().create_timer(0.15).timeout
-	_resolve_attack(stats.get_punch_damage())
+	var power_mult: float = BoxingStyle.profile(style).get("power", 1.0)
+	_resolve_attack(stats.get_punch_damage() * power_mult)
 
 
 func _resolve_attack(base_damage: float) -> void:
 	if is_ko or opponent == null or opponent.is_ko:
 		return
-	if global_position.distance_to(opponent.global_position) <= ATTACK_RANGE:
+	if global_position.distance_to(opponent.global_position) <= get_effective_attack_range():
 		opponent.take_damage(base_damage)
 
 
@@ -109,9 +135,10 @@ func take_damage(amount: float) -> void:
 		return
 	var final_damage := amount
 	if is_blocking:
-		final_damage *= BLOCK_DAMAGE_MULT
+		var defense_mult: float = BoxingStyle.profile(style).get("defense", 1.0)
+		final_damage *= clampf(BLOCK_DAMAGE_MULT / defense_mult, 0.05, 1.0)
 	health = max(health - final_damage, 0.0)
-	health_changed.emit(health, stats.get_max_health())
+	health_changed.emit(health, get_effective_max_health())
 	_flash_hit()
 	if not is_blocking:
 		is_staggered = true
@@ -137,11 +164,11 @@ func _ko() -> void:
 
 
 func reset_fighter(spawn_position: Vector3) -> void:
-	health = stats.get_max_health()
+	health = get_effective_max_health()
 	is_ko = false
 	is_staggered = false
 	is_blocking = false
 	rotation = Vector3.ZERO
 	global_position = spawn_position
 	mesh.position = Vector3.ZERO
-	health_changed.emit(health, stats.get_max_health())
+	health_changed.emit(health, get_effective_max_health())

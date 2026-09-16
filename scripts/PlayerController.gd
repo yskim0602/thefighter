@@ -12,6 +12,11 @@ extends Fighter
 ## training power makes them hit like a slugger, training speed/skill makes
 ## them move like an out-boxer, and so on.
 ##
+## Stance IS a direct choice, though (Orthodox/Southpaw, picked in the
+## Character menu and saved on CareerData) - it decides which physical hand
+## is lead/rear, which Fighter.gd uses for every glove position and punch
+## animation.
+##
 ## Main.gd flips `first_person` when the view is toggled (see toggle_view).
 ## In third person, WASD moves along world axes like before. In first
 ## person the camera rides along with this body's rotation (which always
@@ -24,6 +29,7 @@ var first_person := false
 func _ready() -> void:
 	stats = SaveManager.career.stats
 	style = BoxingStyle.infer_style(stats)
+	stance = SaveManager.career.stance
 	super._ready()
 
 

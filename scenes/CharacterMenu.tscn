@@ -84,6 +84,25 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
 text = "현재 스타일: 복서-펀처"
 
+[node name="StanceRow" type="HBoxContainer" parent="Body/ContentPanel/StatsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="StanceLabel" type="Label" parent="Body/ContentPanel/StatsPanel/StanceRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
+text = "스탠스"
+
+[node name="OrthodoxButton" type="Button" parent="Body/ContentPanel/StatsPanel/StanceRow"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "오소독스 (왼손 앞)"
+
+[node name="SouthpawButton" type="Button" parent="Body/ContentPanel/StatsPanel/StanceRow"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "사우스포 (오른손 앞)"
+
 [node name="HSeparator1" type="HSeparator" parent="Body/ContentPanel/StatsPanel"]
 layout_mode = 2
 
@@ -146,6 +165,8 @@ anchor_top = 0.03
 anchor_right = 0.4
 anchor_bottom = 0.09
 
+[connection signal="pressed" from="Body/ContentPanel/StatsPanel/StanceRow/OrthodoxButton" to="." method="_on_stance_pressed" binds=[0]]
+[connection signal="pressed" from="Body/ContentPanel/StatsPanel/StanceRow/SouthpawButton" to="." method="_on_stance_pressed" binds=[1]]
 [connection signal="pressed" from="Body/ContentPanel/StatsPanel/PowerRow/TrainButton" to="." method="_on_train_pressed" binds=["power"]]
 [connection signal="pressed" from="Body/ContentPanel/StatsPanel/StaminaRow/TrainButton" to="." method="_on_train_pressed" binds=["stamina"]]
 [connection signal="pressed" from="Body/ContentPanel/StatsPanel/SpeedRow/TrainButton" to="." method="_on_train_pressed" binds=["speed"]]

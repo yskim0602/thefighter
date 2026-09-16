@@ -67,6 +67,11 @@ var rivals: Array = []
 ## 싸우지 않은 스테이지는 배열에 항목 자체가 없다. 기록 화면(RecordMenu)이 쓴다.
 var stage_record: Array = []
 
+## 복싱 스탠스(Fighter.Stance.ORTHODOX/SOUTHPAW). 능력치와 달리 훈련으로
+## 정해지는 게 아니라 캐릭터 메뉴에서 직접 고르는 값이고, PlayerController가
+## 경기 시작 시 이 값을 그대로 읽어간다.
+var stance: int = Fighter.Stance.ORTHODOX
+
 
 func stage_name() -> String:
 	if stage >= 0 and stage < STAGE_NAMES.size():
@@ -193,6 +198,7 @@ func to_dict() -> Dictionary:
 		"fame": fame,
 		"rivals": rivals,
 		"stage_record": stage_record,
+		"stance": stance,
 		"fighter_name": stats.fighter_name,
 		"power": stats.power,
 		"stamina": stats.stamina,
@@ -217,6 +223,7 @@ func from_dict(data: Dictionary) -> void:
 	fame = data.get("fame", fame)
 	rivals = data.get("rivals", rivals)
 	stage_record = data.get("stage_record", stage_record)
+	stance = data.get("stance", stance)
 	stats.fighter_name = data.get("fighter_name", stats.fighter_name)
 	stats.power = data.get("power", stats.power)
 	stats.stamina = data.get("stamina", stats.stamina)

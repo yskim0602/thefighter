@@ -1,8 +1,13 @@
 extends Fighter
 
+## 오소독스가 훨씬 흔하다는 현실을 반영해 CPU 스탠스를 이 확률로 무작위
+## 배정한다(오소독스일 확률).
+const ORTHODOX_CHANCE := 0.8
+
 ## CPU 상대. 능력치는 MatchContext.current_offer(수락한 경기 제의)에서
 ## 가져오고, 매치메이킹이 정해준 "성향"(_base_style, BoxingStyle.Style)에서
-## 시작한다. 하지만 스타일은 고정된 직업이 아니다 - 경기 흐름에 따라
+## 시작한다. 스탠스(오소독스/사우스포, Fighter.Stance)도 이때 무작위로
+## 배정된다. 하지만 스타일은 고정된 직업이 아니다 - 경기 흐름에 따라
 ## `style`(Fighter.gd가 전투 수치 배율을 읽는 바로 그 필드)이 실시간으로
 ## 바뀐다:
 ##   - 초반(EARLY_PHASE_SECONDS 이내)에는 아웃복서로 거리를 재고,
@@ -62,6 +67,7 @@ func _ready() -> void:
 		stats.skill = 12 + win_bonus
 		_base_style = BoxingStyle.Style.BOXER_PUNCHER
 	style = _base_style
+	stance = Stance.ORTHODOX if randf() < ORTHODOX_CHANCE else Stance.SOUTHPAW
 	_apply_style_tuning(style)
 	super._ready()
 	health_changed.connect(_on_self_damaged)

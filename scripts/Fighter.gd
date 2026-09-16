@@ -96,8 +96,24 @@ const GETUP_HEALTH_RATIO := 0.35
 const MASH_REDUCE_TIME := 0.3
 const MIN_DOWN_TIME := 0.4
 
+## --- 스탠스(자세)와 양손: 오소독스는 왼손이 앞손(LEAD), 사우스포는
+## 오른손이 앞손이다. 아래 위치 상수는 전부 "오른쪽으로 향하는 크기"로
+## 정의해두고, 실제로 왼손/오른손 어느 쪽에 배치할지에 따라 x부호만
+## 뒤집는다(_side_sign) - 그래서 스탠스가 바뀌면 값을 새로 정의할 필요 없이
+## 좌우로 그대로 반전된다. GUARD_*는 가드를 들었을 때(더 높고 안쪽으로
+## 모인 자세), IDLE_*는 평소 스탠스 자세다.
+enum Stance { ORTHODOX, SOUTHPAW }
+enum Hand { LEFT, RIGHT }
+
+const IDLE_LEAD_POS := Vector3(0.18, 0.42, -0.55)
+const IDLE_REAR_POS := Vector3(0.24, 0.5, -0.2)
+const GUARD_LEAD_POS := Vector3(0.14, 0.62, -0.3)
+const GUARD_REAR_POS := Vector3(0.16, 0.66, -0.16)
+const GUARD_POSE_TIME := 0.12
+
 @export var stats: CharacterStats
 var style: int = BoxingStyle.Style.BOXER_PUNCHER
+var stance: int = Stance.ORTHODOX
 
 var health: float
 var stamina: float
@@ -125,11 +141,12 @@ var _combo_count := 0
 var _combo_reset_timer := 0.0
 var _down_timer := 0.0
 var _base_color := Color.WHITE
-var _glove_rest_pos := Vector3.ZERO
+var _blocking_pose_active := false
 var _punch_tween: Tween
 
 @onready var mesh: MeshInstance3D = $MeshInstance3D
-@onready var glove: MeshInstance3D = $Glove
+@onready var left_glove: MeshInstance3D = $LeftGlove
+@onready var right_glove: MeshInstance3D = $RightGlove
 
 
 func _ready() -> void:
@@ -137,10 +154,50 @@ func _ready() -> void:
 		stats = CharacterStats.new()
 	health = get_effective_max_health()
 	stamina = get_effective_max_stamina()
-	_glove_rest_pos = glove.position
+	_apply_stance()
 	var mat := mesh.get_surface_override_material(0)
 	if mat:
 		_base_color = mat.albedo_color
+
+
+## 왼손이 앞손이면 ORTHODOX, 오른손이 앞손이면 SOUTHPAW.
+func _hand_for_role(role: int) -> int:
+	var lead_is_left := stance == Stance.ORTHODOX
+	if role == PunchType.Role.LEAD:
+		return Hand.LEFT if lead_is_left else Hand.RIGHT
+	return Hand.RIGHT if lead_is_left else Hand.LEFT
+
+
+func _role_for_hand(hand: int) -> int:
+	return PunchType.Role.LEAD if hand == _hand_for_role(PunchType.Role.LEAD) else PunchType.Role.REAR
+
+
+func _glove_node(hand: int) -> MeshInstance3D:
+	return left_glove if hand == Hand.LEFT else right_glove
+
+
+## 오른쪽 기준 크기(template)에 손의 좌우 부호를 곱해서 실제 로컬 위치를 만든다.
+func _side_sign(hand: int) -> float:
+	return -1.0 if hand == Hand.LEFT else 1.0
+
+
+func _idle_pos(hand: int) -> Vector3:
+	var t: Vector3 = IDLE_LEAD_POS if _role_for_hand(hand) == PunchType.Role.LEAD else IDLE_REAR_POS
+	var s := _side_sign(hand)
+	return Vector3(t.x * s, t.y, t.z)
+
+
+func _guard_pos(hand: int) -> Vector3:
+	var t: Vector3 = GUARD_LEAD_POS if _role_for_hand(hand) == PunchType.Role.LEAD else GUARD_REAR_POS
+	var s := _side_sign(hand)
+	return Vector3(t.x * s, t.y, t.z)
+
+
+## 스탠스에 맞춰 양손을 평소 자세(가드 안 든 상태) 위치로 즉시 배치한다.
+## 경기 시작 시(_ready) 한 번 호출된다 - 스탠스는 경기 중에 바뀌지 않는다.
+func _apply_stance() -> void:
+	left_glove.position = _idle_pos(Hand.LEFT)
+	right_glove.position = _idle_pos(Hand.RIGHT)
 
 
 func _physics_process(delta: float) -> void:
@@ -195,6 +252,10 @@ func _physics_process(delta: float) -> void:
 		if _guard_break_timer <= 0.0:
 			guard_broken = false
 
+	if is_blocking != _blocking_pose_active:
+		_blocking_pose_active = is_blocking
+		_update_guard_pose()
+
 	if is_blocking:
 		_block_held_time += delta
 		_drain_guard_stamina(delta)
@@ -248,6 +309,22 @@ func _damage_guard_gauge(amount: float) -> void:
 		guard_broken = true
 		is_blocking = false
 		_guard_break_timer = GUARD_BREAK_STUN_TIME
+
+
+## 가드를 들고 놓을 때 양손을 평소 자세 <-> 가드 자세로 같이 옮긴다(스탠스에
+## 맞게 좌우 반전된 위치로). 진행 중이던 펀치 모션과 같은 글러브를 두고
+## 다투지 않도록 펀치 트윈이 있으면 먼저 끊는다.
+func _update_guard_pose() -> void:
+	if _punch_tween:
+		_punch_tween.kill()
+	var lead_hand := _hand_for_role(PunchType.Role.LEAD)
+	var rear_hand := _hand_for_role(PunchType.Role.REAR)
+	var lead_target := _guard_pos(lead_hand) if is_blocking else _idle_pos(lead_hand)
+	var rear_target := _guard_pos(rear_hand) if is_blocking else _idle_pos(rear_hand)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(_glove_node(lead_hand), "position", lead_target, GUARD_POSE_TIME)
+	tw.tween_property(_glove_node(rear_hand), "position", rear_target, GUARD_POSE_TIME)
 
 
 func _face_opponent() -> void:
@@ -314,7 +391,7 @@ func try_punch(type: int) -> void:
 	# 펀치를 뻗는 동안(선딜레이 중)에는 무방비 상태다 - 상대가 이 틈을
 	# 정확히 맞히면 "빈틈 카운터"(PUNISH_COUNTER_MULT)가 붙는다.
 	is_vulnerable = true
-	_play_punch_motion(type)
+	_play_punch_motion(type, _hand_for_role(punch.hand_role))
 	await get_tree().create_timer(punch.startup).timeout
 	is_vulnerable = false
 
@@ -342,12 +419,22 @@ func _resolve_attack(base_damage: float, guard_break: float, range_mult: float, 
 
 
 ## 실제 캐릭터 모델/애니메이션이 들어오기 전까지 임시로 쓰는 연출이다 -
-## 몸통 캡슐과 "글러브"(작은 구) 하나를 코드로 직접 움직여서, 잽/스트레이트는
-## 직선으로 짧게/길게 찌르고 훅은 옆에서 감아 들어오고 어퍼컷은 아래로
-## 웅크렸다가 위로 솟구치는 식으로 4종의 궤적을 다르게 만들었다 - 눈으로
-## "지금 무슨 펀치가 나갔는지" 구분하기 위한 용도. 실제 모델이 들어오면 이
+## 몸통 캡슐과 던지는 손 쪽 "글러브"(작은 구)를 코드로 직접 움직여서,
+## 잽/스트레이트는 직선으로 짧게/길게 찌르고 훅은 옆에서 감아 들어오고
+## 어퍼컷은 아래로 웅크렸다가 위로 솟구치는 식으로 4종의 궤적을 다르게
+## 만들었다 - 눈으로 "지금 무슨 펀치가, 어느 손으로 나갔는지" 구분하기
+## 위한 용도. 반대쪽 손은 이 함수가 아예 건드리지 않으므로 계속 자기
+## 자세 위치에 그대로 남아있는다. 왼손/오른손 어느 쪽이 던지느냐에 따라
+## `side`(왼손 -1, 오른손 +1)로 좌우 비대칭 오프셋(스트레이트의 안쪽으로
+## 파고드는 궤적, 훅의 좌우 스윙과 몸통 회전 방향)을 그때그때 반전시킨다 -
+## 그래서 같은 코드로 양손 다 자연스럽게 대칭 동작을 낸다. 잽/어퍼컷은
+## 원래 좌우 대칭 궤적이라 반전이 필요 없다. 실제 모델이 들어오면 이
 ## 자리를 AnimationPlayer 재생으로 바꾸면 된다.
-func _play_punch_motion(type: int) -> void:
+func _play_punch_motion(type: int, hand: int) -> void:
+	var glove_node := _glove_node(hand)
+	var rest := _idle_pos(hand)
+	var side := _side_sign(hand)
+
 	if _punch_tween:
 		_punch_tween.kill()
 	var tw := create_tween()
@@ -356,30 +443,30 @@ func _play_punch_motion(type: int) -> void:
 	match type:
 		PunchType.Type.JAB:
 			tw.tween_property(mesh, "position:z", -0.15, 0.06)
-			tw.parallel().tween_property(glove, "position", _glove_rest_pos + Vector3(0, 0, -0.45), 0.07)
+			tw.parallel().tween_property(glove_node, "position", rest + Vector3(0, 0, -0.45), 0.07)
 			tw.chain().tween_property(mesh, "position:z", 0.0, 0.09)
-			tw.parallel().tween_property(glove, "position", _glove_rest_pos, 0.09)
+			tw.parallel().tween_property(glove_node, "position", rest, 0.09)
 		PunchType.Type.STRAIGHT:
 			tw.tween_property(mesh, "position:z", -0.3, 0.1)
-			tw.parallel().tween_property(glove, "position", _glove_rest_pos + Vector3(-0.05, -0.03, -0.7), 0.11)
+			tw.parallel().tween_property(glove_node, "position", rest + Vector3(-0.05 * side, -0.03, -0.7), 0.11)
 			tw.chain().tween_property(mesh, "position:z", 0.0, 0.15)
-			tw.parallel().tween_property(glove, "position", _glove_rest_pos, 0.15)
+			tw.parallel().tween_property(glove_node, "position", rest, 0.15)
 		PunchType.Type.HOOK:
-			tw.tween_property(glove, "position", _glove_rest_pos + Vector3(0.35, 0.05, 0.15), 0.05)
-			tw.parallel().tween_property(mesh, "rotation:y", 0.3, 0.05)
-			tw.chain().tween_property(glove, "position", _glove_rest_pos + Vector3(-0.35, 0.0, -0.55), 0.13)
+			tw.tween_property(glove_node, "position", rest + Vector3(0.35 * side, 0.05, 0.15), 0.05)
+			tw.parallel().tween_property(mesh, "rotation:y", 0.3 * side, 0.05)
+			tw.chain().tween_property(glove_node, "position", rest + Vector3(-0.35 * side, 0.0, -0.55), 0.13)
 			tw.parallel().tween_property(mesh, "position:z", -0.2, 0.13)
-			tw.parallel().tween_property(mesh, "rotation:y", -0.25, 0.13)
-			tw.chain().tween_property(glove, "position", _glove_rest_pos, 0.14)
+			tw.parallel().tween_property(mesh, "rotation:y", -0.25 * side, 0.13)
+			tw.chain().tween_property(glove_node, "position", rest, 0.14)
 			tw.parallel().tween_property(mesh, "position:z", 0.0, 0.14)
 			tw.parallel().tween_property(mesh, "rotation:y", 0.0, 0.14)
 		PunchType.Type.UPPERCUT:
-			tw.tween_property(glove, "position", _glove_rest_pos + Vector3(0, -0.35, 0.1), 0.07)
+			tw.tween_property(glove_node, "position", rest + Vector3(0, -0.35, 0.1), 0.07)
 			tw.parallel().tween_property(mesh, "rotation:x", 0.12, 0.07)
-			tw.chain().tween_property(glove, "position", _glove_rest_pos + Vector3(0, 0.4, -0.5), 0.13)
+			tw.chain().tween_property(glove_node, "position", rest + Vector3(0, 0.4, -0.5), 0.13)
 			tw.parallel().tween_property(mesh, "position:z", -0.25, 0.13)
 			tw.parallel().tween_property(mesh, "rotation:x", -0.15, 0.13)
-			tw.chain().tween_property(glove, "position", _glove_rest_pos, 0.16)
+			tw.chain().tween_property(glove_node, "position", rest, 0.16)
 			tw.parallel().tween_property(mesh, "position:z", 0.0, 0.16)
 			tw.parallel().tween_property(mesh, "rotation:x", 0.0, 0.16)
 
@@ -507,6 +594,7 @@ func reset_fighter(spawn_position: Vector3) -> void:
 	is_vulnerable = false
 	guard_broken = false
 	counter_ready = false
+	_blocking_pose_active = false
 	_down_timer = 0.0
 	_dodge_timer = 0.0
 	_dodge_cooldown_left = 0.0
@@ -519,7 +607,7 @@ func reset_fighter(spawn_position: Vector3) -> void:
 	global_position = spawn_position
 	mesh.position = Vector3.ZERO
 	mesh.rotation = Vector3.ZERO
-	glove.position = _glove_rest_pos
+	_apply_stance()
 	health_changed.emit(health, get_effective_max_health())
 	stamina_changed.emit(stamina, get_effective_max_stamina())
 	guard_gauge_changed.emit(guard_gauge, GUARD_GAUGE_MAX)

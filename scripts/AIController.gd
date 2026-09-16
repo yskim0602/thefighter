@@ -188,7 +188,7 @@ func _make_decision() -> void:
 	var move_speed := get_effective_move_speed()
 	var attack_range := get_effective_attack_range()
 
-	if counter_ready and dist <= attack_range:
+	if (counter_ready or opponent.is_vulnerable) and dist <= attack_range:
 		try_punch(_pick_punch_type())
 		return
 
@@ -211,13 +211,14 @@ func _make_decision() -> void:
 	velocity.x = 0.0
 	velocity.z = 0.0
 	var roll := randf()
+	var effective_block_chance: float = 0.0 if guard_broken else block_chance
 	if roll < dodge_chance:
 		var lateral := Vector3(
 			-(opponent.global_position.z - global_position.z), 0.0,
 			opponent.global_position.x - global_position.x
 		)
 		try_dodge(lateral)
-	elif roll < dodge_chance + block_chance:
+	elif roll < dodge_chance + effective_block_chance:
 		_block_timer = block_duration
 	else:
 		try_punch(_pick_punch_type())

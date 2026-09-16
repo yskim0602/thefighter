@@ -25,6 +25,7 @@ extends CharacterBody3D
 
 signal health_changed(current: float, max_value: float)
 signal stamina_changed(current: float, max_value: float)
+signal guard_gauge_changed(current: float, max_value: float)
 signal knocked_down(count: int)
 signal recovered_from_down
 signal knocked_out
@@ -38,10 +39,19 @@ const ATTACK_RANGE := 2.2
 const BLOCK_DAMAGE_MULT := 0.2
 
 ## --- 스태미나: 펀치/회피마다 소모되고 가만히 있으면 회복된다. 바닥나면
-## "지친" 상태가 되어 펀치가 약해지고 느려진다(EXHAUSTED_*). ---
+## "지친" 상태가 되어 펀치가 약해지고 느려진다(EXHAUSTED_*), 회복 속도
+## 자체도 느려진다(LOW_STAMINA_*). ---
 const STAMINA_REGEN_PER_SEC := 6.0
 const EXHAUSTED_DAMAGE_MULT := 0.6
 const EXHAUSTED_COOLDOWN_MULT := 1.6
+const LOW_STAMINA_REGEN_RATIO := 0.3
+const LOW_STAMINA_REGEN_MULT := 0.5
+
+## --- 연속 펀치 피로: 짧은 시간(COMBO_RESET_TIME) 안에 펀치를 계속 내면
+## 한 대당 스태미나 소모가 누적으로 늘어난다(COMBO_MAX_STACKS로 상한). ---
+const COMBO_RESET_TIME := 1.2
+const COMBO_STAMINA_SCALING := 0.15
+const COMBO_MAX_STACKS := 5
 
 ## --- 회피: 스태미나를 쓰고 잠깐 이동속도가 크게 붙으며, 그동안 받는
 ## 피해가 크게 줄어든다(완전 무적은 아님 - "거의 스쳐 맞음"에 가깝다). ---
@@ -51,12 +61,31 @@ const DODGE_SPEED_MULT := 2.2
 const DODGE_COOLDOWN := 0.6
 const DODGE_DAMAGE_REDUCTION := 0.85
 
-## --- 카운터: 맞기 직전(가드를 든 지 얼마 안 됐을 때)에 정확히 막거나,
-## 회피로 스치면 잠깐 카운터 판정이 열린다. 그 안에 펀치를 맞히면 보너스
-## 데미지가 붙는다. ---
+## --- 가드 게이지: 가드를 들고 있으면 스태미나가 계속 깎이고(스태미나
+## 자체 회복은 멈춘다), 막을 때마다 이 게이지도 깎인다. 0이 되면
+## GUARD_BREAK_STUN_TIME 동안 가드가 강제로 풀린다. 가드를 안 들고 있을
+## 때만(그리고 풀린 상태가 아닐 때만) 서서히 회복된다. ---
+const GUARD_STAMINA_DRAIN_PER_SEC := 5.0
+const GUARD_GAUGE_MAX := 100.0
+const GUARD_GAUGE_DAMAGE_MULT := 1.0
+const GUARD_GAUGE_REGEN_PER_SEC := 14.0
+const GUARD_BREAK_STUN_TIME := 1.5
+
+## --- 카운터: 두 가지 경로로 열린다 - (1) 맞기 직전(가드를 든 지 얼마
+## 안 됐을 때)에 정확히 막거나 회피로 스치면 내 다음 펀치에 보너스가
+## 붙고, (2) 상대가 자기 펀치를 뻗는 중(is_vulnerable, 무방비 상태)일 때
+## 맞히면 그 자리에서 바로 보너스가 붙는다("빈틈 카운터"). ---
 const PERFECT_BLOCK_WINDOW := 0.15
 const COUNTER_WINDOW := 1.2
 const COUNTER_BONUS_MULT := 1.5
+const PUNISH_COUNTER_MULT := 1.4
+
+## --- 피격 부위: 펀치마다 확률적으로 머리/몸통 중 하나에 맞는다
+## (PunchType.body_chance). 머리는 확률적으로 경직, 몸통은 스태미나를
+## 추가로 깎는다 - 막았거나 회피했을 때는 적용하지 않는다. ---
+enum HitPart { HEAD, BODY }
+const HEAD_STAGGER_CHANCE := 0.4
+const BODY_STAMINA_DAMAGE_MULT := 0.5
 
 ## --- 다운/KO: 체력이 0이 되면 다운(is_down)되고, 카운트 안에 자동으로
 ## 일어난다(마시면 더 빨리). MAX_KNOCKDOWNS번째 다운은 그대로 KO로
@@ -72,12 +101,15 @@ var style: int = BoxingStyle.Style.BOXER_PUNCHER
 
 var health: float
 var stamina: float
+var guard_gauge := GUARD_GAUGE_MAX
 var opponent: Fighter = null
 var is_blocking := false
 var is_staggered := false
 var is_dodging := false
 var is_down := false
 var is_ko := false
+var is_vulnerable := false
+var guard_broken := false
 var counter_ready := false
 var knockdown_count := 0
 
@@ -88,6 +120,9 @@ var _dodge_timer := 0.0
 var _dodge_cooldown_left := 0.0
 var _dodge_direction := Vector3.ZERO
 var _counter_ready_timer := 0.0
+var _guard_break_timer := 0.0
+var _combo_count := 0
+var _combo_reset_timer := 0.0
 var _down_timer := 0.0
 var _base_color := Color.WHITE
 var _glove_rest_pos := Vector3.ZERO
@@ -145,10 +180,29 @@ func _physics_process(delta: float) -> void:
 		if _counter_ready_timer <= 0.0:
 			counter_ready = false
 
+	if _combo_reset_timer > 0.0:
+		_combo_reset_timer -= delta
+		if _combo_reset_timer <= 0.0:
+			_combo_count = 0
+
+	# 펀치를 뻗는 중이거나 가드가 깨진 동안에는 가드를 들 수 없다 - 무방비
+	# 상태다.
+	if is_vulnerable:
+		is_blocking = false
+	if guard_broken:
+		is_blocking = false
+		_guard_break_timer -= delta
+		if _guard_break_timer <= 0.0:
+			guard_broken = false
+
 	if is_blocking:
 		_block_held_time += delta
+		_drain_guard_stamina(delta)
 	else:
 		_block_held_time = 0.0
+		_regen_stamina(delta)
+		if not guard_broken:
+			_regen_guard_gauge(delta)
 
 	if _stagger_timer > 0.0:
 		_stagger_timer -= delta
@@ -158,8 +212,6 @@ func _physics_process(delta: float) -> void:
 	if _punch_cooldown_left > 0.0:
 		_punch_cooldown_left -= delta
 
-	_regen_stamina(delta)
-
 	_face_opponent()
 	move_and_slide()
 	_clamp_to_arena()
@@ -167,9 +219,35 @@ func _physics_process(delta: float) -> void:
 
 func _regen_stamina(delta: float) -> void:
 	var max_stamina := get_effective_max_stamina()
-	if stamina < max_stamina:
-		stamina = min(stamina + STAMINA_REGEN_PER_SEC * delta, max_stamina)
-		stamina_changed.emit(stamina, max_stamina)
+	if stamina >= max_stamina:
+		return
+	var regen_rate := STAMINA_REGEN_PER_SEC
+	if stamina / max_stamina < LOW_STAMINA_REGEN_RATIO:
+		regen_rate *= LOW_STAMINA_REGEN_MULT
+	stamina = min(stamina + regen_rate * delta, max_stamina)
+	stamina_changed.emit(stamina, max_stamina)
+
+
+func _drain_guard_stamina(delta: float) -> void:
+	if stamina <= 0.0:
+		return
+	stamina = max(stamina - GUARD_STAMINA_DRAIN_PER_SEC * delta, 0.0)
+	stamina_changed.emit(stamina, get_effective_max_stamina())
+
+
+func _regen_guard_gauge(delta: float) -> void:
+	if guard_gauge < GUARD_GAUGE_MAX:
+		guard_gauge = min(guard_gauge + GUARD_GAUGE_REGEN_PER_SEC * delta, GUARD_GAUGE_MAX)
+		guard_gauge_changed.emit(guard_gauge, GUARD_GAUGE_MAX)
+
+
+func _damage_guard_gauge(amount: float) -> void:
+	guard_gauge = max(guard_gauge - amount * GUARD_GAUGE_DAMAGE_MULT, 0.0)
+	guard_gauge_changed.emit(guard_gauge, GUARD_GAUGE_MAX)
+	if guard_gauge <= 0.0:
+		guard_broken = true
+		is_blocking = false
+		_guard_break_timer = GUARD_BREAK_STUN_TIME
 
 
 func _face_opponent() -> void:
@@ -213,10 +291,18 @@ func get_effective_attack_range() -> float:
 
 
 func try_punch(type: int) -> void:
-	if is_ko or is_down or is_staggered or is_dodging or _punch_cooldown_left > 0.0:
+	if is_ko or is_down or is_staggered or is_dodging or is_vulnerable or _punch_cooldown_left > 0.0:
 		return
 	var punch: Dictionary = PunchType.data(type)
-	var stamina_cost: float = punch.stamina_cost
+
+	# 연속 펀치 피로: 짧은 시간 안에 계속 내면 한 대당 스태미나 소모가
+	# 누적으로 늘어난다. 잠시 쉬면(COMBO_RESET_TIME) 다시 초기화된다.
+	_combo_reset_timer = COMBO_RESET_TIME
+	var combo_stacks: int = mini(_combo_count, COMBO_MAX_STACKS)
+	var combo_cost_mult: float = 1.0 + combo_stacks * COMBO_STAMINA_SCALING
+	_combo_count += 1
+
+	var stamina_cost: float = punch.stamina_cost * combo_cost_mult
 	var exhausted := stamina < stamina_cost
 	stamina = max(stamina - stamina_cost, 0.0)
 	stamina_changed.emit(stamina, get_effective_max_stamina())
@@ -225,23 +311,34 @@ func try_punch(type: int) -> void:
 	var cooldown_mult: float = punch.cooldown_mult * (EXHAUSTED_COOLDOWN_MULT if exhausted else 1.0)
 	_punch_cooldown_left = BASE_PUNCH_COOLDOWN * stats.get_attack_cooldown_mult() / stamina_mult * cooldown_mult
 
+	# 펀치를 뻗는 동안(선딜레이 중)에는 무방비 상태다 - 상대가 이 틈을
+	# 정확히 맞히면 "빈틈 카운터"(PUNISH_COUNTER_MULT)가 붙는다.
+	is_vulnerable = true
 	_play_punch_motion(type)
 	await get_tree().create_timer(punch.startup).timeout
+	is_vulnerable = false
+
+	if is_ko or is_down:
+		return  # 스윙 도중 상대에게 다운/KO당했으면 판정하지 않는다.
 
 	var power_mult: float = BoxingStyle.profile(style).get("power", 1.0)
 	var damage_mult: float = punch.damage_mult * power_mult * (EXHAUSTED_DAMAGE_MULT if exhausted else 1.0)
 	if counter_ready:
 		damage_mult *= COUNTER_BONUS_MULT
 		counter_ready = false
-	_resolve_attack(stats.get_punch_damage() * damage_mult, punch.guard_break, punch.range_mult)
+	var part: int = HitPart.BODY if randf() < punch.body_chance else HitPart.HEAD
+	_resolve_attack(stats.get_punch_damage() * damage_mult, punch.guard_break, punch.range_mult, part)
 
 
-func _resolve_attack(base_damage: float, guard_break: float, range_mult: float) -> void:
+func _resolve_attack(base_damage: float, guard_break: float, range_mult: float, part: int) -> void:
 	if is_ko or is_down or opponent == null or opponent.is_ko or opponent.is_down:
 		return
 	var range: float = get_effective_attack_range() * range_mult
 	if global_position.distance_to(opponent.global_position) <= range:
-		opponent.take_damage(base_damage, guard_break)
+		var final_damage := base_damage
+		if opponent.is_vulnerable:
+			final_damage *= PUNISH_COUNTER_MULT
+		opponent.take_damage(final_damage, guard_break, part)
 
 
 ## 실제 캐릭터 모델/애니메이션이 들어오기 전까지 임시로 쓰는 연출이다 -
@@ -289,7 +386,7 @@ func _play_punch_motion(type: int) -> void:
 
 ## 방향이 주어지지 않으면(스틱 중립) 상대 반대쪽으로 물러나는 회피가 된다.
 func try_dodge(direction: Vector3) -> bool:
-	if is_ko or is_down or is_staggered or is_dodging or _dodge_cooldown_left > 0.0:
+	if is_ko or is_down or is_staggered or is_dodging or is_vulnerable or _dodge_cooldown_left > 0.0:
 		return false
 	if stamina < DODGE_STAMINA_COST:
 		return false
@@ -311,27 +408,37 @@ func _direction_to_opponent() -> Vector3:
 	return dir.normalized() if dir.length() > 0.01 else Vector3.FORWARD
 
 
-func take_damage(amount: float, guard_break: float = 0.0) -> void:
+func take_damage(amount: float, guard_break: float = 0.0, part: int = HitPart.HEAD) -> void:
 	if is_ko or is_down:
 		return
 	var final_damage := amount
+	var blocked := false
 	if is_dodging:
 		final_damage *= (1.0 - DODGE_DAMAGE_REDUCTION)
 		_trigger_counter_ready()
-	elif is_blocking:
+	elif is_blocking and not guard_broken:
+		blocked = true
 		var defense_mult: float = BoxingStyle.profile(style).get("defense", 1.0)
 		var block_mult: float = clampf(BLOCK_DAMAGE_MULT / defense_mult, 0.05, 1.0)
 		final_damage *= lerpf(block_mult, 1.0, guard_break)
 		if _block_held_time <= PERFECT_BLOCK_WINDOW:
 			_trigger_counter_ready()
+		_damage_guard_gauge(amount)
 
 	health = max(health - final_damage, 0.0)
 	health_changed.emit(health, get_effective_max_health())
 	_flash_hit()
 
-	if not is_blocking and not is_dodging:
-		is_staggered = true
-		_stagger_timer = STAGGER_TIME
+	# 막았거나 피한 공격은 부위 효과(머리 경직/몸통 스태미나 감소)가
+	# 적용되지 않는다 - 방어가 실제로 보상받도록.
+	if not blocked and not is_dodging:
+		if part == HitPart.BODY:
+			var stamina_loss: float = final_damage * BODY_STAMINA_DAMAGE_MULT
+			stamina = max(stamina - stamina_loss, 0.0)
+			stamina_changed.emit(stamina, get_effective_max_stamina())
+		elif randf() < HEAD_STAGGER_CHANCE:
+			is_staggered = true
+			_stagger_timer = STAGGER_TIME
 	if health <= 0.0:
 		_go_down()
 
@@ -390,17 +497,23 @@ func reset_fighter(spawn_position: Vector3) -> void:
 		_punch_tween = null
 	health = get_effective_max_health()
 	stamina = get_effective_max_stamina()
+	guard_gauge = GUARD_GAUGE_MAX
 	is_ko = false
 	is_down = false
 	knockdown_count = 0
 	is_staggered = false
 	is_blocking = false
 	is_dodging = false
+	is_vulnerable = false
+	guard_broken = false
 	counter_ready = false
 	_down_timer = 0.0
 	_dodge_timer = 0.0
 	_dodge_cooldown_left = 0.0
 	_counter_ready_timer = 0.0
+	_guard_break_timer = 0.0
+	_combo_count = 0
+	_combo_reset_timer = 0.0
 	_block_held_time = 0.0
 	rotation = Vector3.ZERO
 	global_position = spawn_position
@@ -409,3 +522,4 @@ func reset_fighter(spawn_position: Vector3) -> void:
 	glove.position = _glove_rest_pos
 	health_changed.emit(health, get_effective_max_health())
 	stamina_changed.emit(stamina, get_effective_max_stamina())
+	guard_gauge_changed.emit(guard_gauge, GUARD_GAUGE_MAX)

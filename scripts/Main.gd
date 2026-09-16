@@ -7,9 +7,10 @@ const RESULT_DISPLAY_TIME := 2.5
 const WIN_COLOR := Color(0.4, 0.85, 0.4)
 const LOSE_COLOR := Color(0.9, 0.35, 0.35)
 
-@onready var player: Fighter = $Player
+@onready var player: PlayerController = $Player
 @onready var enemy: Fighter = $Enemy
 @onready var camera: Camera3D = $Camera3D
+@onready var fp_camera: Camera3D = $Player/FirstPersonCamera
 @onready var player_bar: ProgressBar = $UI/HUD/PlayerHealthBar
 @onready var enemy_bar: ProgressBar = $UI/HUD/EnemyHealthBar
 @onready var player_stamina_bar: ProgressBar = $UI/HUD/PlayerStaminaBar
@@ -27,6 +28,10 @@ var player_spawn: Vector3
 var enemy_spawn: Vector3
 var time_left := ROUND_TIME
 var round_over := false
+## V로 전환. 1인칭에서는 카메라가 플레이어 몸체(항상 상대를 바라보도록
+## 자동 회전함)에 그대로 붙어서 따라간다 - PlayerController.first_person도
+## 같이 맞춰서 이동 입력을 그 몸체 기준(카메라가 보는 방향 기준)으로 바꾼다.
+var first_person := false
 
 
 func _ready() -> void:
@@ -58,6 +63,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if Input.is_action_just_pressed("toggle_view"):
+		_toggle_view()
 	_update_camera()
 	enemy_style_label.text = BoxingStyle.style_name(enemy.style)
 
@@ -74,6 +81,19 @@ func _update_camera() -> void:
 	var back_distance: float = clamp(dist * 1.2 + 3.0, 6.0, 12.0)
 	camera.global_position = mid + Vector3(0, 3.0, back_distance)
 	camera.look_at(mid + Vector3(0, 1, 0), Vector3.UP)
+
+
+## V로 3인칭/1인칭을 전환한다. 1인칭 카메라는 Player의 자식이라 몸통이
+## 상대를 자동으로 바라보는 회전(Fighter._face_opponent)에 그대로 실려서
+## 따라간다. 내 캡슐 몸통은 1인칭에서 시야를 가리니 숨기고(글러브는 그대로
+## 보이게 둬서 어떤 펀치가 나가는지는 계속 보인다), PlayerController의
+## 이동 계산도 같이 전환해서 "앞으로"가 지금 보고 있는 방향과 맞게 한다.
+func _toggle_view() -> void:
+	first_person = not first_person
+	camera.current = not first_person
+	fp_camera.current = first_person
+	player.mesh.visible = not first_person
+	player.first_person = first_person
 
 
 func _on_player_health_changed(current: float, max_h: float) -> void:

@@ -34,3 +34,8 @@ surface_material_override/0 = SubResource("StandardMaterial3D_p1")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.4, -0.45)
 mesh = SubResource("SphereMesh_glove_p1")
 surface_material_override/0 = SubResource("StandardMaterial3D_glove_p1")
+
+[node name="FirstPersonCamera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+current = false
+fov = 85.0

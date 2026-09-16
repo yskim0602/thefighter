@@ -90,8 +90,11 @@ var _dodge_direction := Vector3.ZERO
 var _counter_ready_timer := 0.0
 var _down_timer := 0.0
 var _base_color := Color.WHITE
+var _glove_rest_pos := Vector3.ZERO
+var _punch_tween: Tween
 
 @onready var mesh: MeshInstance3D = $MeshInstance3D
+@onready var glove: MeshInstance3D = $Glove
 
 
 func _ready() -> void:
@@ -99,6 +102,7 @@ func _ready() -> void:
 		stats = CharacterStats.new()
 	health = get_effective_max_health()
 	stamina = get_effective_max_stamina()
+	_glove_rest_pos = glove.position
 	var mat := mesh.get_surface_override_material(0)
 	if mat:
 		_base_color = mat.albedo_color
@@ -221,7 +225,7 @@ func try_punch(type: int) -> void:
 	var cooldown_mult: float = punch.cooldown_mult * (EXHAUSTED_COOLDOWN_MULT if exhausted else 1.0)
 	_punch_cooldown_left = BASE_PUNCH_COOLDOWN * stats.get_attack_cooldown_mult() / stamina_mult * cooldown_mult
 
-	_play_attack_lunge()
+	_play_punch_motion(type)
 	await get_tree().create_timer(punch.startup).timeout
 
 	var power_mult: float = BoxingStyle.profile(style).get("power", 1.0)
@@ -240,10 +244,47 @@ func _resolve_attack(base_damage: float, guard_break: float, range_mult: float) 
 		opponent.take_damage(base_damage, guard_break)
 
 
-func _play_attack_lunge() -> void:
+## 실제 캐릭터 모델/애니메이션이 들어오기 전까지 임시로 쓰는 연출이다 -
+## 몸통 캡슐과 "글러브"(작은 구) 하나를 코드로 직접 움직여서, 잽/스트레이트는
+## 직선으로 짧게/길게 찌르고 훅은 옆에서 감아 들어오고 어퍼컷은 아래로
+## 웅크렸다가 위로 솟구치는 식으로 4종의 궤적을 다르게 만들었다 - 눈으로
+## "지금 무슨 펀치가 나갔는지" 구분하기 위한 용도. 실제 모델이 들어오면 이
+## 자리를 AnimationPlayer 재생으로 바꾸면 된다.
+func _play_punch_motion(type: int) -> void:
+	if _punch_tween:
+		_punch_tween.kill()
 	var tw := create_tween()
-	tw.tween_property(mesh, "position:z", -0.3, 0.08)
-	tw.tween_property(mesh, "position:z", 0.0, 0.12)
+	_punch_tween = tw
+
+	match type:
+		PunchType.Type.JAB:
+			tw.tween_property(mesh, "position:z", -0.15, 0.06)
+			tw.parallel().tween_property(glove, "position", _glove_rest_pos + Vector3(0, 0, -0.45), 0.07)
+			tw.chain().tween_property(mesh, "position:z", 0.0, 0.09)
+			tw.parallel().tween_property(glove, "position", _glove_rest_pos, 0.09)
+		PunchType.Type.STRAIGHT:
+			tw.tween_property(mesh, "position:z", -0.3, 0.1)
+			tw.parallel().tween_property(glove, "position", _glove_rest_pos + Vector3(-0.05, -0.03, -0.7), 0.11)
+			tw.chain().tween_property(mesh, "position:z", 0.0, 0.15)
+			tw.parallel().tween_property(glove, "position", _glove_rest_pos, 0.15)
+		PunchType.Type.HOOK:
+			tw.tween_property(glove, "position", _glove_rest_pos + Vector3(0.35, 0.05, 0.15), 0.05)
+			tw.parallel().tween_property(mesh, "rotation:y", 0.3, 0.05)
+			tw.chain().tween_property(glove, "position", _glove_rest_pos + Vector3(-0.35, 0.0, -0.55), 0.13)
+			tw.parallel().tween_property(mesh, "position:z", -0.2, 0.13)
+			tw.parallel().tween_property(mesh, "rotation:y", -0.25, 0.13)
+			tw.chain().tween_property(glove, "position", _glove_rest_pos, 0.14)
+			tw.parallel().tween_property(mesh, "position:z", 0.0, 0.14)
+			tw.parallel().tween_property(mesh, "rotation:y", 0.0, 0.14)
+		PunchType.Type.UPPERCUT:
+			tw.tween_property(glove, "position", _glove_rest_pos + Vector3(0, -0.35, 0.1), 0.07)
+			tw.parallel().tween_property(mesh, "rotation:x", 0.12, 0.07)
+			tw.chain().tween_property(glove, "position", _glove_rest_pos + Vector3(0, 0.4, -0.5), 0.13)
+			tw.parallel().tween_property(mesh, "position:z", -0.25, 0.13)
+			tw.parallel().tween_property(mesh, "rotation:x", -0.15, 0.13)
+			tw.chain().tween_property(glove, "position", _glove_rest_pos, 0.16)
+			tw.parallel().tween_property(mesh, "position:z", 0.0, 0.16)
+			tw.parallel().tween_property(mesh, "rotation:x", 0.0, 0.16)
 
 
 ## 방향이 주어지지 않으면(스틱 중립) 상대 반대쪽으로 물러나는 회피가 된다.
@@ -344,6 +385,9 @@ func _ko() -> void:
 
 
 func reset_fighter(spawn_position: Vector3) -> void:
+	if _punch_tween:
+		_punch_tween.kill()
+		_punch_tween = null
 	health = get_effective_max_health()
 	stamina = get_effective_max_stamina()
 	is_ko = false
@@ -361,5 +405,7 @@ func reset_fighter(spawn_position: Vector3) -> void:
 	rotation = Vector3.ZERO
 	global_position = spawn_position
 	mesh.position = Vector3.ZERO
+	mesh.rotation = Vector3.ZERO
+	glove.position = _glove_rest_pos
 	health_changed.emit(health, get_effective_max_health())
 	stamina_changed.emit(stamina, get_effective_max_stamina())
